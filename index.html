@@ -28,6 +28,8 @@
   --card: rgba(21,53,160,.18);
   --bord: rgba(246,168,28,.22);
   --div: rgba(255,255,255,.08);
+  --ai-purple: #8b5cf6;
+  --ai-purple-dark: #7c3aed;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1055,6 +1057,205 @@ nav {
   filter: brightness(1.25);
 }
 
+/* ══════════════════════════════════════════════════════════════
+   AI ANALYSIS BUTTON
+   ══════════════════════════════════════════════════════════════ */
+.ai-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  margin-top: 12px;
+  background: linear-gradient(135deg, var(--ai-purple), var(--ai-purple-dark));
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.ai-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
+}
+
+.ai-icon {
+  font-size: 16px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   AI MODAL
+   ══════════════════════════════════════════════════════════════ */
+.ai-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  background: rgba(7,17,43,0.98);
+  backdrop-filter: blur(12px);
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-modal.open {
+  display: flex;
+  animation: modalFadeIn 0.3s ease;
+}
+
+.ai-modal-content {
+  background: var(--navy);
+  border: 1px solid var(--bord);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ai-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.ai-modal-title {
+  font-family: 'Anton', sans-serif;
+  font-size: 28px;
+  letter-spacing: 2px;
+  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-modal-close {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 28px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.ai-modal-close:hover {
+  color: var(--amber);
+}
+
+.ai-loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.ai-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--div);
+  border-top-color: var(--amber);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-prediction-bars {
+  display: flex;
+  gap: 8px;
+  margin: 20px 0;
+  height: 40px;
+}
+
+.ai-prediction-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.ai-prediction-bar.home { background: linear-gradient(135deg, var(--blue), #1e4fd8); }
+.ai-prediction-bar.draw { background: linear-gradient(135deg, #6b7280, #4b5563); }
+.ai-prediction-bar.away { background: linear-gradient(135deg, var(--amber), var(--amber3)); }
+
+.ai-insights-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.ai-insights-list li {
+  padding: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--div);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--offwh);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.ai-stat-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--div);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.ai-stat-label {
+  color: var(--gray);
+  font-size: 12px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ai-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.ai-confidence {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.ai-confidence.high { background: rgba(24,232,107,0.1); color: var(--green); }
+.ai-confidence.medium { background: rgba(246,168,28,0.1); color: var(--amber); }
+.ai-confidence.low { background: rgba(255,51,85,0.1); color: var(--red); }
+
 .bet-ui {
   border-top: 1px solid var(--div);
   padding-top: 16px;
@@ -2059,6 +2260,23 @@ header {
   </div>
 </div>
 
+<!-- AI ANALYSIS MODAL -->
+<div class="ai-modal" id="aiModal">
+  <div class="ai-modal-content">
+    <div class="ai-modal-header">
+      <div class="ai-modal-title">
+        <span>🤖</span> AI MATCH ANALYSIS
+      </div>
+      <button class="ai-modal-close" onclick="closeAIModal()">×</button>
+    </div>
+    <div class="ai-loading" id="aiLoading">
+      <div class="ai-spinner"></div>
+      <p>Analyzing match data...</p>
+    </div>
+    <div class="ai-results" id="aiResults" style="display: none;"></div>
+  </div>
+</div>
+
 <!-- HERO SECTION -->
 <section class="hero" id="hero">
   <div class="hero-grid">
@@ -2284,6 +2502,7 @@ const CFG = {
   WC_PROJECT_ID: '1e376e78c0aa32bd807ec395c7f7217e',
   EXPLORER: 'https://basescan.org'
 };
+
 // Minimal ABIs
 const TOKEN_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
@@ -2306,145 +2525,43 @@ const BETTING_ABI = [
 const OUTCOME = { HOME_WIN: 1, DRAW: 2, AWAY_WIN: 3 };
 
 // ══════════════════════════════════════════════════════════════════
-//  FLAG IMAGES FROM CDN - NEW FUNCTION
+//  FLAG IMAGES FROM CDN
 // ══════════════════════════════════════════════════════════════════
 function getFlagUrl(teamName) {
   if (!teamName) return 'https://flagcdn.com/w80/un.png';
   
-  // Country code mapping
   const countryCodes = {
-    'USA': 'us',
-    'United States': 'us',
-    'Mexico': 'mx',
-    'México': 'mx',
-    'Canada': 'ca',
-    'Brazil': 'br',
-    'Brasil': 'br',
-    'Argentina': 'ar',
-    'France': 'fr',
-    'Germany': 'de',
-    'Deutschland': 'de',
-    'Spain': 'es',
-    'España': 'es',
-    'England': 'gb-eng',
-    'Italy': 'it',
-    'Italia': 'it',
-    'Netherlands': 'nl',
-    'Holland': 'nl',
-    'Portugal': 'pt',
-    'Belgium': 'be',
-    'Croatia': 'hr',
-    'Hrvatska': 'hr',
-    'Switzerland': 'ch',
-    'Poland': 'pl',
-    'Polska': 'pl',
-    'Denmark': 'dk',
-    'Sweden': 'se',
-    'Norway': 'no',
-    'Japan': 'jp',
-    'South Korea': 'kr',
-    'Korea Republic': 'kr',
-    'Australia': 'au',
-    'Morocco': 'ma',
-    'Maroc': 'ma',
-    'Senegal': 'sn',
-    'Nigeria': 'ng',
-    'Egypt': 'eg',
-    'Tunisia': 'tn',
-    'Algeria': 'dz',
-    'Cameroon': 'cm',
-    'Ghana': 'gh',
-    'Ivory Coast': 'ci',
-    "Côte d'Ivoire": 'ci',
-    'Uruguay': 'uy',
-    'Colombia': 'co',
-    'Ecuador': 'ec',
-    'Peru': 'pe',
-    'Chile': 'cl',
-    'Paraguay': 'py',
-    'Bolivia': 'bo',
-    'Venezuela': 've',
-    'Costa Rica': 'cr',
-    'Panama': 'pa',
-    'Jamaica': 'jm',
-    'Honduras': 'hn',
-    'El Salvador': 'sv',
-    'Iran': 'ir',
-    'IR Iran': 'ir',
-    'Saudi Arabia': 'sa',
-    'Qatar': 'qa',
-    'United Arab Emirates': 'ae',
-    'UAE': 'ae',
-    'Iraq': 'iq',
-    'Kuwait': 'kw',
-    'Jordan': 'jo',
-    'Lebanon': 'lb',
-    'Palestine': 'ps',
-    'Uzbekistan': 'uz',
-    'China': 'cn',
-    'India': 'in',
-    'Indonesia': 'id',
-    'Thailand': 'th',
-    'Vietnam': 'vn',
-    'Philippines': 'ph',
-    'New Zealand': 'nz',
-    'South Africa': 'za',
-    'Turkey': 'tr',
-    'Türkiye': 'tr',
-    'Greece': 'gr',
-    'Hungary': 'hu',
-    'Romania': 'ro',
-    'Slovakia': 'sk',
-    'Czech Republic': 'cz',
-    'Czechia': 'cz',
-    'Austria': 'at',
-    'Wales': 'gb-wls',
-    'Scotland': 'gb-sct',
-    'Northern Ireland': 'gb-nir',
-    'Ireland': 'ie',
-    'Republic of Ireland': 'ie',
-    'Ukraine': 'ua',
-    'Russia': 'ru',
-    'Serbia': 'rs',
-    'Slovenia': 'si',
-    'Bulgaria': 'bg',
-    'Iceland': 'is',
+    'USA': 'us', 'United States': 'us', 'Mexico': 'mx', 'Canada': 'ca',
+    'Brazil': 'br', 'Argentina': 'ar', 'France': 'fr', 'Germany': 'de',
+    'Spain': 'es', 'England': 'gb-eng', 'Italy': 'it', 'Netherlands': 'nl',
+    'Portugal': 'pt', 'Belgium': 'be', 'Croatia': 'hr', 'Switzerland': 'ch',
+    'Japan': 'jp', 'South Korea': 'kr', 'Australia': 'au', 'Morocco': 'ma',
+    'Senegal': 'sn', 'Uruguay': 'uy', 'Colombia': 'co', 'Ecuador': 'ec',
+    'Peru': 'pe', 'Chile': 'cl', 'Paraguay': 'py', 'Bolivia': 'bo',
+    'Venezuela': 've', 'Costa Rica': 'cr', 'Panama': 'pa', 'Jamaica': 'jm',
+    'Honduras': 'hn', 'Iran': 'ir', 'Saudi Arabia': 'sa', 'Qatar': 'qa',
+    'UAE': 'ae', 'China': 'cn', 'India': 'in', 'New Zealand': 'nz',
+    'South Africa': 'za', 'Turkey': 'tr', 'Greece': 'gr', 'Wales': 'gb-wls',
+    'Scotland': 'gb-sct', 'Ireland': 'ie', 'Ukraine': 'ua', 'Russia': 'ru',
+    'Serbia': 'rs', 'Slovenia': 'si', 'Bulgaria': 'bg', 'Iceland': 'is',
     'Finland': 'fi'
   };
   
-  // Try exact match
-  if (countryCodes[teamName]) {
-    return `https://flagcdn.com/w80/${countryCodes[teamName]}.png`;
-  }
+  if (countryCodes[teamName]) return `https://flagcdn.com/w80/${countryCodes[teamName]}.png`;
   
-  // Try case-insensitive match
   const teamUpper = teamName.toUpperCase();
   for (let [key, code] of Object.entries(countryCodes)) {
-    if (key.toUpperCase() === teamUpper) {
-      return `https://flagcdn.com/w80/${code}.png`;
-    }
+    if (key.toUpperCase() === teamUpper) return `https://flagcdn.com/w80/${code}.png`;
   }
   
-  // Common name fallbacks
-  if (teamName.includes('USA') || teamName.includes('United States')) 
-    return 'https://flagcdn.com/w80/us.png';
+  if (teamName.includes('USA')) return 'https://flagcdn.com/w80/us.png';
   if (teamName.includes('Brazil')) return 'https://flagcdn.com/w80/br.png';
   if (teamName.includes('Argentina')) return 'https://flagcdn.com/w80/ar.png';
   if (teamName.includes('France')) return 'https://flagcdn.com/w80/fr.png';
   if (teamName.includes('Germany')) return 'https://flagcdn.com/w80/de.png';
   if (teamName.includes('Spain')) return 'https://flagcdn.com/w80/es.png';
   if (teamName.includes('England')) return 'https://flagcdn.com/w80/gb-eng.png';
-  if (teamName.includes('Italy')) return 'https://flagcdn.com/w80/it.png';
-  if (teamName.includes('Mexico')) return 'https://flagcdn.com/w80/mx.png';
-  if (teamName.includes('Canada')) return 'https://flagcdn.com/w80/ca.png';
-  if (teamName.includes('Netherlands')) return 'https://flagcdn.com/w80/nl.png';
-  if (teamName.includes('Portugal')) return 'https://flagcdn.com/w80/pt.png';
-  if (teamName.includes('Japan')) return 'https://flagcdn.com/w80/jp.png';
-  if (teamName.includes('Korea')) return 'https://flagcdn.com/w80/kr.png';
-  if (teamName.includes('Morocco')) return 'https://flagcdn.com/w80/ma.png';
-  if (teamName.includes('Senegal')) return 'https://flagcdn.com/w80/sn.png';
   
-  // Fallback
   return 'https://flagcdn.com/w80/un.png';
 }
 
@@ -2487,44 +2604,157 @@ function goPage(page, btn) {
 }
 
 // ══════════════════════════════════════════════════════════════════
-//  WALLET CONNECTION — Web3Modal v3 (AppKit) — WalletConnect v2
+//  AI ANALYSIS FUNCTIONS - UPDATED WITH DEBUG
 // ══════════════════════════════════════════════════════════════════
+async function showAIAnalysis(matchId) {
+  const modal = document.getElementById('aiModal');
+  const loading = document.getElementById('aiLoading');
+  const results = document.getElementById('aiResults');
+  
+  if (!modal || !loading || !results) {
+    console.error("Modal elements not found!");
+    toast('UI Error - check console', 'er');
+    return;
+  }
+  
+  console.log("🔍 Opening AI modal for match:", matchId);
+  modal.classList.add('open');
+  loading.style.display = 'block';
+  results.style.display = 'none';
+  
+  try {
+    const url = `${CFG.API}/ai/analyze/${matchId}`;
+    console.log("📡 Fetching from:", url);
+    
+    const response = await fetch(url);
+    console.log("📥 Response status:", response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("❌ Error response:", errorText);
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+    
+    const data = await response.json();
+    console.log("✅ Received data:", data);
+    
+    displayAIAnalysis(data);
+    
+    loading.style.display = 'none';
+    results.style.display = 'block';
+    
+  } catch (error) {
+    console.error("💥 AI Analysis error:", error);
+    toast('Failed to load AI analysis: ' + error.message, 'er');
+    closeAIModal();
+  }
+}
 
+function displayAIAnalysis(data) {
+  const results = document.getElementById('aiResults');
+  if (!results) return;
+  
+  console.log("📊 Displaying analysis for:", data.homeTeam, "vs", data.awayTeam);
+  
+  // Handle both response formats
+  const analysis = data.analysis || data;
+  const prediction = analysis.prediction || { homeWin: 33, draw: 33, awayWin: 33 };
+  const insights = analysis.insights || [];
+  const keyFactors = analysis.keyFactors || [];
+  
+  const confidenceClass = 
+    analysis.confidence === 'High' ? 'high' :
+    analysis.confidence === 'Medium' ? 'medium' : 'low';
+  
+  const homeTeam = data.homeTeam || analysis.homeTeam || 'Home';
+  const awayTeam = data.awayTeam || analysis.awayTeam || 'Away';
+  
+  results.innerHTML = `
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-family: 'Anton', sans-serif; font-size: 24px; margin-bottom: 8px; color: var(--amber);">
+        ${homeTeam} vs ${awayTeam}
+      </h3>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span class="ai-confidence ${confidenceClass}">${analysis.confidence || 'Medium'} Confidence</span>
+        <span style="color: var(--gray); font-size: 14px;">
+          Most likely: ${(analysis.mostLikely || 'UNKNOWN').replace('_', ' ')}
+        </span>
+      </div>
+    </div>
+    
+    <div class="ai-prediction-bars">
+      <div class="ai-prediction-bar home" style="flex: ${prediction.homeWin || 33}">
+        ${(prediction.homeWin || 33).toFixed(1)}%
+      </div>
+      <div class="ai-prediction-bar draw" style="flex: ${prediction.draw || 33}">
+        ${(prediction.draw || 33).toFixed(1)}%
+      </div>
+      <div class="ai-prediction-bar away" style="flex: ${prediction.awayWin || 33}">
+        ${(prediction.awayWin || 33).toFixed(1)}%
+      </div>
+    </div>
+    
+    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🤖 AI Insights</h4>
+    <ul class="ai-insights-list">
+      ${insights.length > 0 ? 
+        insights.map(insight => `<li><span>💡</span> ${insight}</li>`).join('') :
+        '<li><span>💡</span> No insights available</li>'
+      }
+    </ul>
+    
+    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">📊 Key Factors</h4>
+    <ul class="ai-insights-list">
+      ${keyFactors.length > 0 ?
+        keyFactors.map(factor => `<li><span>⚡</span> ${factor}</li>`).join('') :
+        '<li><span>⚡</span> No key factors identified</li>'
+      }
+    </ul>
+    
+    <div class="ai-stat-grid">
+      <div class="ai-stat-card">
+        <div class="ai-stat-label">Match ID</div>
+        <div class="ai-stat-value">${data.matchId || 'N/A'}</div>
+      </div>
+      <div class="ai-stat-card">
+        <div class="ai-stat-label">Analysis Time</div>
+        <div class="ai-stat-value">${new Date(data.timestamp || Date.now()).toLocaleTimeString()}</div>
+      </div>
+    </div>
+    
+    ${data.note ? `<p style="margin-top: 16px; font-size: 12px; color: var(--gray); text-align: center;">${data.note}</p>` : ''}
+  `;
+}
+
+function closeAIModal() {
+  const modal = document.getElementById('aiModal');
+  if (modal) modal.classList.remove('open');
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  WALLET CONNECTION
+// ══════════════════════════════════════════════════════════════════
 let web3modal = null;
 let web3modalProvider = null;
 
-// Lazy-init Web3Modal after ESM loads
 async function initWeb3Modal() {
   if (web3modal) return web3modal;
 
-  // Wait for ESM import to resolve (give it up to 3 seconds)
   let tries = 0;
   while (!window.Web3Modal && tries < 30) {
     await new Promise(r => setTimeout(r, 100));
     tries++;
   }
 
-  if (!window.Web3Modal) {
-    // Fallback: MetaMask-only mode
-    return null;
-  }
+  if (!window.Web3Modal) return null;
 
   const { createWeb3Modal, defaultConfig } = window.Web3Modal;
 
-  const sepolia = {
-    chainId: 11155111,
-    name: 'Sepolia',
-    currency: 'ETH',
-    explorerUrl: 'https://sepolia.etherscan.io',
-    rpcUrl: 'https://rpc.sepolia.org'
-  };
-
-  const mainnet = {
+  const base = {
     chainId: 8453,
     name: 'Base',
     currency: 'ETH',
     explorerUrl: 'https://basescan.org/',
-    rpcUrl: 'https://cloudflare-eth.com'
+    rpcUrl: 'https://mainnet.base.org'
   };
 
   const metadata = {
@@ -2534,18 +2764,16 @@ async function initWeb3Modal() {
     icons: ['https://avatars.githubusercontent.com/u/37784886']
   };
 
-  const chainList = CFG.CHAIN_ID === 1 ? [mainnet] : [sepolia];
-
   web3modal = createWeb3Modal({
     ethersConfig: defaultConfig({
       metadata,
       enableEIP6963: true,
       enableInjected: true,
       enableCoinbase: true,
-      rpcUrl: chainList[0].rpcUrl,
-      defaultChainId: CFG.CHAIN_ID
+      rpcUrl: base.rpcUrl,
+      defaultChainId: 8453
     }),
-    chains: chainList,
+    chains: [base],
     projectId: CFG.WC_PROJECT_ID,
     themeMode: 'dark',
     themeVariables: {
@@ -2556,7 +2784,6 @@ async function initWeb3Modal() {
     }
   });
 
-  // Subscribe to wallet connection events
   web3modal.subscribeProvider(async (state) => {
     if (state.provider && state.address) {
       try {
@@ -2581,17 +2808,14 @@ async function initWeb3Modal() {
 
 function openWcModal() {
   if (wallet) {
-    // If already connected, open manage modal
     if (web3modal) { web3modal.open({ view: 'Account' }); return; }
     disconnectWallet();
     return;
   }
-  // Open Web3Modal
   initWeb3Modal().then(modal => {
     if (modal) {
       modal.open();
     } else {
-      // Fallback to MetaMask only
       connectMetaMaskDirect();
     }
   });
@@ -2603,13 +2827,11 @@ function closeWcModal() {
   if (m) m.classList.remove('open');
 }
 
-// Kept for backward compat (modal option buttons)
 async function connectWallet(type) {
   closeWcModal();
   if (type === 'metamask') {
     await connectMetaMaskDirect();
   } else {
-    // WalletConnect / Coinbase — open Web3Modal
     const modal = await initWeb3Modal();
     if (modal) modal.open();
     else toast('Web3Modal failed to load', 'er');
@@ -2625,14 +2847,14 @@ async function connectMetaMaskDirect() {
   try {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if (parseInt(chainId, 16) !== CFG.CHAIN_ID) {
+    if (parseInt(chainId, 16) !== 8453) {
       try {
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x' + CFG.CHAIN_ID.toString(16) }]
+          params: [{ chainId: '0x2105' }] // 8453 in hex
         });
       } catch (sw) {
-        if (sw.code !== 4902) toast('Please switch to ' + (CFG.CHAIN_ID === 8453 ? 'Base Mainnet' : 'Sepolia'), 'er');
+        if (sw.code !== 4902) toast('Please switch to Base Mainnet', 'er');
       }
     }
     const provider = new ethers.BrowserProvider(window.ethereum);
@@ -2814,6 +3036,10 @@ function renderMatchCard(m) {
           <div class="os a" style="flex:${odds.away}">${odds.away >= 14 ? odds.away.toFixed(0) + '%' : ''}</div>
         </div>
       </div>
+      <button class="ai-btn" onclick="showAIAnalysis(${m.id})">
+        <span class="ai-icon">🤖</span>
+        <span>AI Match Analysis</span>
+      </button>
       ${betUI}
     </div>
   </div>`;
@@ -3044,6 +3270,265 @@ async function loadLeaderboard() {
   }).join('');
 }
 
+
+function displayAIAnalysis(data) {
+  const results = document.getElementById('aiResults');
+  if (!results) return;
+  
+  console.log("📊 Displaying analysis for:", data.homeTeam, "vs", data.awayTeam);
+  console.log("Full data:", data); // Log full data for debugging
+  
+  // Handle both response formats
+  const analysis = data.analysis || data;
+  
+  // Extract all fields with proper fallbacks
+  const homeTeam = data.homeTeam || analysis.homeTeam || 'Home';
+  const awayTeam = data.awayTeam || analysis.awayTeam || 'Away';
+  const competition = data.competition || analysis.competition || 'FIFA World Cup';
+  const mostLikely = data.mostLikely || analysis.mostLikely || 'UNKNOWN';
+  const confidence = data.confidence || analysis.confidence || 'LOW';
+  const analystNote = data.analystNote || analysis.analystNote || '';
+  const h2hSummary = data.h2hSummary || analysis.h2hSummary || '';
+  const injuryOrNewsAlert = data.injuryOrNewsAlert || analysis.injuryOrNewsAlert || null;
+  const dataQuality = data.dataQuality || analysis.dataQuality || 'LOW';
+  
+  // Prediction probabilities
+  const prediction = data.prediction || analysis.prediction || { homeWin: 33, draw: 34, awayWin: 33 };
+  
+  // Betting angles
+  const bettingAngles = data.bettingAngles || analysis.bettingAngles || {
+    recommendedBet: 'No data',
+    valueBet: null,
+    btts: 'UNCERTAIN',
+    bttsConfidence: 'LOW',
+    overUnderLine: 2.5,
+    overUnderCall: 'UNCERTAIN',
+    asianHandicap: null,
+    avoidBets: []
+  };
+  
+  // Expected goals
+  const expectedGoals = data.expectedGoals || analysis.expectedGoals || { home: 0, away: 0, total: 0 };
+  
+  // Form summary
+  const formSummary = data.formSummary || analysis.formSummary || {
+    homeTeamForm: 'No data',
+    awayTeamForm: 'No data',
+    homeMomentum: 'neutral',
+    awayMomentum: 'neutral'
+  };
+  
+  // Arrays
+  const insights = analysis.insights || data.insights || [];
+  const keyFactors = analysis.keyFactors || data.keyFactors || [];
+  const riskFactors = analysis.riskFactors || data.riskFactors || [];
+  const warningFlags = analysis.warningFlags || data.warningFlags || [];
+  
+  const confidenceClass = confidence.toLowerCase() === 'high' ? 'high' : 
+                         confidence.toLowerCase() === 'medium' ? 'medium' : 'low';
+  
+  // Build the HTML with all available data
+  let html = `
+    <div style="margin-bottom: 20px;">
+      <h3 style="font-family: 'Anton', sans-serif; font-size: 24px; margin-bottom: 8px; color: var(--amber);">
+        ${homeTeam} vs ${awayTeam}
+      </h3>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+        <span class="ai-confidence ${confidenceClass}">${confidence} Confidence</span>
+        <span style="color: var(--gray); font-size: 14px;">
+          Most likely: ${mostLikely.replace('_', ' ')}
+        </span>
+      </div>
+      ${competition ? `<div style="color: var(--gray); font-size: 13px; margin-bottom: 4px;">🏆 ${competition}</div>` : ''}
+      ${dataQuality ? `<div style="color: var(--gray); font-size: 12px;">Data Quality: ${dataQuality}</div>` : ''}
+    </div>
+    
+    <div class="ai-prediction-bars">
+      <div class="ai-prediction-bar home" style="flex: ${prediction.homeWin || 33}">
+        ${(prediction.homeWin || 33).toFixed(1)}%
+      </div>
+      <div class="ai-prediction-bar draw" style="flex: ${prediction.draw || 33}">
+        ${(prediction.draw || 33).toFixed(1)}%
+      </div>
+      <div class="ai-prediction-bar away" style="flex: ${prediction.awayWin || 33}">
+        ${(prediction.awayWin || 33).toFixed(1)}%
+      </div>
+    </div>
+  `;
+  
+  // Expected Goals section
+  if (expectedGoals.total > 0) {
+    html += `
+      <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+          <span>⚽ Expected Goals: <strong>${expectedGoals.total.toFixed(2)}</strong></span>
+          <span>${expectedGoals.home.toFixed(2)} - ${expectedGoals.away.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Betting Angles section
+  html += `
+    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">💰 Betting Angles</h4>
+    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+      ${bettingAngles.recommendedBet ? `
+        <div style="margin-bottom: 10px;">
+          <span style="color: var(--gray); font-size: 13px;">Recommended Bet:</span>
+          <div style="font-weight: 700; color: var(--green);">${bettingAngles.recommendedBet}</div>
+        </div>
+      ` : ''}
+      
+      ${bettingAngles.valueBet ? `
+        <div style="margin-bottom: 10px;">
+          <span style="color: var(--gray); font-size: 13px;">Value Bet:</span>
+          <div style="font-weight: 600; color: var(--amber);">${bettingAngles.valueBet}</div>
+        </div>
+      ` : ''}
+      
+      <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+        ${bettingAngles.btts ? `
+          <div>
+            <span style="color: var(--gray); font-size: 12px;">BTTS</span>
+            <div><span style="font-weight: 700;">${bettingAngles.btts}</span> <span style="color: var(--gray); font-size: 11px;">(${bettingAngles.bttsConfidence || 'LOW'})</span></div>
+          </div>
+        ` : ''}
+        
+        ${bettingAngles.overUnderCall ? `
+          <div>
+            <span style="color: var(--gray); font-size: 12px;">Over/Under ${bettingAngles.overUnderLine || 2.5}</span>
+            <div style="font-weight: 700;">${bettingAngles.overUnderCall}</div>
+          </div>
+        ` : ''}
+        
+        ${bettingAngles.asianHandicap ? `
+          <div>
+            <span style="color: var(--gray); font-size: 12px;">Asian Handicap</span>
+            <div style="font-weight: 700;">${bettingAngles.asianHandicap}</div>
+          </div>
+        ` : ''}
+      </div>
+      
+      ${bettingAngles.avoidBets && bettingAngles.avoidBets.length > 0 ? `
+        <div style="margin-top: 15px;">
+          <span style="color: var(--red); font-size: 12px;">🚫 Avoid:</span>
+          <div style="font-size: 13px;">${bettingAngles.avoidBets.join(', ')}</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  
+  // AI Insights
+  html += `
+    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🤖 AI Insights</h4>
+    <ul class="ai-insights-list">
+      ${insights.length > 0 ? 
+        insights.map(insight => `<li><span>💡</span> ${insight}</li>`).join('') :
+        '<li><span>💡</span> No insights available</li>'
+      }
+    </ul>
+  `;
+  
+  // Key Factors
+  if (keyFactors.length > 0) {
+    html += `
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">📊 Key Factors</h4>
+      <ul class="ai-insights-list">
+        ${keyFactors.map(factor => `<li><span>⚡</span> ${factor}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Risk Factors
+  if (riskFactors.length > 0) {
+    html += `
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--red);">⚠️ Risk Factors</h4>
+      <ul class="ai-insights-list">
+        ${riskFactors.map(risk => `<li style="color: var(--red);"><span>⚠️</span> ${risk}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Warning Flags
+  if (warningFlags.length > 0) {
+    html += `
+      <div style="background: rgba(255, 51, 85, 0.1); border: 1px solid var(--red); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">🚨 Warnings</div>
+        <ul style="margin: 0; padding-left: 20px; color: var(--gray);">
+          ${warningFlags.map(w => `<li style="font-size: 13px;">${w}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+  
+  // Analyst Note
+  if (analystNote) {
+    html += `
+      <div style="margin: 15px 0; padding: 12px; background: rgba(246,168,28,0.05); border-left: 3px solid var(--amber); border-radius: 4px;">
+        <div style="color: var(--gray); font-size: 12px; margin-bottom: 4px;">📝 Analyst Note</div>
+        <div style="font-size: 14px; line-height: 1.5;">${analystNote}</div>
+      </div>
+    `;
+  }
+  
+  // H2H Summary
+  if (h2hSummary) {
+    html += `
+      <div style="margin: 15px 0; font-size: 14px; color: var(--offwh);">
+        <span style="color: var(--gray);">⚔️ H2H:</span> ${h2hSummary}
+      </div>
+    `;
+  }
+  
+  // Injury/News Alert
+  if (injuryOrNewsAlert) {
+    html += `
+      <div style="margin: 15px 0; padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
+        <span style="color: var(--warning);">📰</span> <span style="font-size: 13px;">${injuryOrNewsAlert}</span>
+      </div>
+    `;
+  }
+  
+  // Form Summary
+  if (formSummary.homeTeamForm || formSummary.awayTeamForm) {
+    html += `
+      <div style="margin-top: 15px;">
+        <h4 style="font-family: 'Anton', sans-serif; font-size: 16px; margin: 10px 0; color: var(--amber);">📈 Form</h4>
+        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+          <div style="margin-bottom: 8px;">
+            <span style="color: var(--gray);">${homeTeam}:</span> 
+            <span style="font-size: 13px;">${formSummary.homeTeamForm || 'No data'}</span>
+            ${formSummary.homeMomentum ? ` <span style="color: var(--amber);">${formSummary.homeMomentum}</span>` : ''}
+          </div>
+          <div>
+            <span style="color: var(--gray);">${awayTeam}:</span> 
+            <span style="font-size: 13px;">${formSummary.awayTeamForm || 'No data'}</span>
+            ${formSummary.awayMomentum ? ` <span style="color: var(--amber);">${formSummary.awayMomentum}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Metadata
+  html += `
+    <div class="ai-stat-grid" style="margin-top: 20px;">
+      <div class="ai-stat-card">
+        <div class="ai-stat-label">Match ID</div>
+        <div class="ai-stat-value">${data.matchId || 'N/A'}</div>
+      </div>
+      <div class="ai-stat-card">
+        <div class="ai-stat-label">Analysis Time</div>
+        <div class="ai-stat-value">${new Date(data.timestamp || Date.now()).toLocaleTimeString()}</div>
+      </div>
+    </div>
+    
+    ${data.note ? `<p style="margin-top: 16px; font-size: 12px; color: var(--gray); text-align: center;">${data.note}</p>` : ''}
+  `;
+  
+  results.innerHTML = html;
+}
+
 // ══════════════════════════════════════════════════════════════════
 //  TOAST NOTIFICATIONS
 // ══════════════════════════════════════════════════════════════════
@@ -3066,7 +3551,7 @@ function initTicker() {
   const messages = [
     'CLUTCH WC 2026', '★', 'BET • WIN • REPEAT', '★',
     'BASE POWERED', '★', 'AUTO SETTLEMENT', '★',
-    'ZERO TRUST', '★', '97% TO WINNERS', '★'
+    'AI ANALYSIS', '★', '97% TO WINNERS', '★'
   ];
   
   track.innerHTML = messages.map(m => `<span>${m}</span>`).join('') +
@@ -3093,26 +3578,12 @@ function createParticles() {
   }
 }
 
-// Debug function to see team names (optional)
-async function debugTeamNames() {
-  const data = await api('/matches');
-  if (data?.matches) {
-    console.log('=== TEAM NAMES FROM API ===');
-    data.matches.forEach(m => {
-      console.log(`Home: "${m.homeTeam}" → Flag URL: ${getFlagUrl(m.homeTeam)}`);
-      console.log(`Away: "${m.awayTeam}" → Flag URL: ${getFlagUrl(m.awayTeam)}`);
-      console.log('---');
-    });
-  }
-}
-
 // Initialize everything when page loads
 window.addEventListener('load', () => {
   loadStats();
   loadMatches();
   initTicker();
   createParticles();
-  setTimeout(debugTeamNames, 3000); // Optional: remove if not needed
   
   setInterval(() => {
     loadMatches();
