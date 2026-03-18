@@ -2660,126 +2660,143 @@ function displayAIAnalysis(data) {
   console.log("📊 Displaying analysis for:", data.firstTeam || data.homeTeam, "vs", data.secondTeam || data.awayTeam);
   console.log("Full data:", data);
   
-  // Handle both old and new data formats with safe fallbacks
-  const firstTeam = data.firstTeam || data.homeTeam || 'First Team';
-  const secondTeam = data.secondTeam || data.awayTeam || 'Second Team';
+  // SAFE EXTRACTION - with fallbacks for EVERYTHING
+  const safeData = {
+    // Teams
+    firstTeam: data?.firstTeam || data?.homeTeam || 'First Team',
+    secondTeam: data?.secondTeam || data?.awayTeam || 'Second Team',
+    
+    // Prediction probabilities - with multiple fallback layers
+    firstTeamWinProb: 33,
+    drawProb: 34,
+    secondTeamWinProb: 33,
+    
+    // Metadata
+    mostLikely: data?.mostLikely || 'UNKNOWN',
+    confidence: data?.confidence || 'LOW',
+    competition: data?.competition || 'FIFA World Cup',
+    dataQuality: data?.dataQuality || 'LOW',
+    matchId: data?.matchId || 'N/A',
+    timestamp: data?.timestamp || new Date().toISOString(),
+    
+    // Arrays
+    insights: Array.isArray(data?.insights) ? data.insights : [],
+    keyFactors: Array.isArray(data?.keyFactors) ? data.keyFactors : [],
+    riskFactors: Array.isArray(data?.riskFactors) ? data.riskFactors : [],
+    warningFlags: Array.isArray(data?.warningFlags) ? data.warningFlags : [],
+    
+    // Objects
+    bettingAngles: data?.bettingAngles || {},
+    expectedGoals: data?.expectedGoals || {},
+    formSummary: data?.formSummary || {},
+    teamNews: data?.teamNews || {},
+    
+    // Strings
+    analystNote: data?.analystNote || '',
+    h2hSummary: data?.h2hSummary || '',
+    fromCache: data?._fromCache || false
+  };
   
-  // Extract prediction probabilities safely
-  let firstTeamWinProb = 33;
-  let drawProb = 34;
-  let secondTeamWinProb = 33;
-  
-  if (data.prediction) {
+  // Extract prediction probabilities with MULTIPLE fallback paths
+  if (data?.prediction) {
     // New format (firstTeamWin/draw/secondTeamWin)
-    if (data.prediction.firstTeamWin !== undefined) {
-      firstTeamWinProb = data.prediction.firstTeamWin;
-      drawProb = data.prediction.draw;
-      secondTeamWinProb = data.prediction.secondTeamWin;
-    } 
+    if (typeof data.prediction.firstTeamWin === 'number') {
+      safeData.firstTeamWinProb = data.prediction.firstTeamWin;
+      safeData.drawProb = data.prediction.draw ?? 34;
+      safeData.secondTeamWinProb = data.prediction.secondTeamWin ?? 33;
+    }
     // Old format (homeWin/draw/awayWin)
-    else if (data.prediction.homeWin !== undefined) {
-      firstTeamWinProb = data.prediction.homeWin;
-      drawProb = data.prediction.draw;
-      secondTeamWinProb = data.prediction.awayWin;
+    else if (typeof data.prediction.homeWin === 'number') {
+      safeData.firstTeamWinProb = data.prediction.homeWin;
+      safeData.drawProb = data.prediction.draw ?? 34;
+      safeData.secondTeamWinProb = data.prediction.awayWin ?? 33;
     }
   }
   
-  // Use display object if available (pre-formatted for frontend)
-  if (data.display) {
-    firstTeamWinProb = data.display.homeWinProb ?? firstTeamWinProb;
-    drawProb = data.display.drawProb ?? drawProb;
-    secondTeamWinProb = data.display.awayWinProb ?? secondTeamWinProb;
+  // Use display object if available
+  if (data?.display) {
+    safeData.firstTeamWinProb = typeof data.display.homeWinProb === 'number' ? data.display.homeWinProb : safeData.firstTeamWinProb;
+    safeData.drawProb = typeof data.display.drawProb === 'number' ? data.display.drawProb : safeData.drawProb;
+    safeData.secondTeamWinProb = typeof data.display.awayWinProb === 'number' ? data.display.awayWinProb : safeData.secondTeamWinProb;
+    safeData.firstTeam = data.display.homeTeam || safeData.firstTeam;
+    safeData.secondTeam = data.display.awayTeam || safeData.secondTeam;
   }
   
-  // Ensure numbers are valid and convert to numbers
-  firstTeamWinProb = Number(firstTeamWinProb) || 33;
-  drawProb = Number(drawProb) || 34;
-  secondTeamWinProb = Number(secondTeamWinProb) || 33;
+  // FINAL SAFETY CHECK - ensure all numbers are actual numbers
+  // This is the CRITICAL part that prevents the toFixed error
+  safeData.firstTeamWinProb = typeof safeData.firstTeamWinProb === 'number' ? safeData.firstTeamWinProb : 33;
+  safeData.drawProb = typeof safeData.drawProb === 'number' ? safeData.drawProb : 34;
+  safeData.secondTeamWinProb = typeof safeData.secondTeamWinProb === 'number' ? safeData.secondTeamWinProb : 33;
   
-  // Get metadata
-  const mostLikely = data.mostLikely || 'UNKNOWN';
-  const confidence = data.confidence || 'LOW';
-  const competition = data.competition || 'FIFA World Cup';
-  const dataQuality = data.dataQuality || 'LOW';
+  // Format the most likely outcome
+  let displayMostLikely = safeData.mostLikely;
+  if (safeData.mostLikely === 'FIRST_TEAM_WIN') displayMostLikely = `${safeData.firstTeam} Win`;
+  else if (safeData.mostLikely === 'SECOND_TEAM_WIN') displayMostLikely = `${safeData.secondTeam} Win`;
+  else if (safeData.mostLikely === 'HOME_WIN') displayMostLikely = `${safeData.firstTeam} Win`;
+  else if (safeData.mostLikely === 'AWAY_WIN') displayMostLikely = `${safeData.secondTeam} Win`;
+  else displayMostLikely = (safeData.mostLikely || 'UNKNOWN').replace(/_/g, ' ');
   
-  // Get betting angles with safe defaults
-  const bettingAngles = data.bettingAngles || {
-    recommendedBet: 'No data',
-    valueBet: null,
-    btts: 'UNCERTAIN',
-    bttsConfidence: 'LOW',
-    overUnderLine: 2.5,
-    overUnderCall: 'UNCERTAIN',
-    asianHandicap: null,
-    avoidBets: []
-  };
+  // Confidence class
+  const confidenceLower = (safeData.confidence || '').toLowerCase();
+  const confidenceClass = confidenceLower === 'high' ? 'high' : 
+                         confidenceLower === 'medium' ? 'medium' : 'low';
   
-  // Get expected goals safely
-  const expectedGoals = data.expectedGoals || {};
-  const homeExpected = expectedGoals.firstTeam ?? expectedGoals.home ?? 0;
-  const awayExpected = expectedGoals.secondTeam ?? expectedGoals.away ?? 0;
-  const totalExpected = expectedGoals.total ?? (homeExpected + awayExpected) ?? 0;
+  // Betting angles with safe defaults
+  const ba = safeData.bettingAngles;
+  const recommendedBet = ba?.recommendedBet || 'No data';
+  const valueBet = ba?.valueBet || null;
+  const btts = ba?.btts || 'UNCERTAIN';
+  const bttsConfidence = ba?.bttsConfidence || 'LOW';
+  const overUnderLine = ba?.overUnderLine || 2.5;
+  const overUnderCall = ba?.overUnderCall || 'UNCERTAIN';
+  const asianHandicap = ba?.asianHandicap || null;
+  const avoidBets = Array.isArray(ba?.avoidBets) ? ba.avoidBets : [];
   
-  // Get form summary safely
-  const formSummary = data.formSummary || {};
-  const firstTeamForm = formSummary.firstTeamForm || formSummary.homeTeamForm || 'No data';
-  const secondTeamForm = formSummary.secondTeamForm || formSummary.awayTeamForm || 'No data';
-  const firstTeamMomentum = formSummary.firstTeamMomentum || formSummary.homeMomentum || 'neutral';
-  const secondTeamMomentum = formSummary.secondTeamMomentum || formSummary.awayMomentum || 'neutral';
+  // Expected goals with safe defaults
+  const eg = safeData.expectedGoals;
+  const homeExpected = typeof eg?.firstTeam === 'number' ? eg.firstTeam : 
+                      (typeof eg?.home === 'number' ? eg.home : 0);
+  const awayExpected = typeof eg?.secondTeam === 'number' ? eg.secondTeam : 
+                      (typeof eg?.away === 'number' ? eg.away : 0);
+  const totalExpected = typeof eg?.total === 'number' ? eg.total : (homeExpected + awayExpected);
   
-  // Get arrays safely
-  const insights = data.insights || [];
-  const keyFactors = data.keyFactors || [];
-  const riskFactors = data.riskFactors || [];
-  const warningFlags = data.warningFlags || [];
+  // Form summary with safe defaults
+  const fs = safeData.formSummary;
+  const firstTeamForm = fs?.firstTeamForm || fs?.homeTeamForm || 'No data';
+  const secondTeamForm = fs?.secondTeamForm || fs?.awayTeamForm || 'No data';
+  const firstTeamMomentum = fs?.firstTeamMomentum || fs?.homeMomentum || 'neutral';
+  const secondTeamMomentum = fs?.secondTeamMomentum || fs?.awayMomentum || 'neutral';
   
-  // Get team news safely
-  const teamNews = data.teamNews || {
-    firstTeam: 'No injury news available',
-    secondTeam: 'No injury news available'
-  };
+  // Team news with safe defaults
+  const tn = safeData.teamNews;
+  const firstTeamNews = tn?.firstTeam || tn?.homeTeam || 'No injury news available';
+  const secondTeamNews = tn?.secondTeam || tn?.awayTeam || 'No injury news available';
   
-  // Get analyst note and H2H summary
-  const analystNote = data.analystNote || '';
-  const h2hSummary = data.h2hSummary || '';
-  
-  // Determine confidence class
-  const confidenceClass = confidence.toLowerCase() === 'high' ? 'high' : 
-                         confidence.toLowerCase() === 'medium' ? 'medium' : 'low';
-  
-  // Format the most likely outcome for display
-  let displayMostLikely = mostLikely;
-  if (mostLikely === 'FIRST_TEAM_WIN') displayMostLikely = `${firstTeam} Win`;
-  else if (mostLikely === 'SECOND_TEAM_WIN') displayMostLikely = `${secondTeam} Win`;
-  else if (mostLikely === 'HOME_WIN') displayMostLikely = `${firstTeam} Win`;
-  else if (mostLikely === 'AWAY_WIN') displayMostLikely = `${secondTeam} Win`;
-  else displayMostLikely = displayMostLikely.replace(/_/g, ' ');
-  
-  // Build the HTML
+  // NOW build the HTML - ALL values are guaranteed to be safe
   let html = `
     <div style="margin-bottom: 20px;">
       <h3 style="font-family: 'Anton', sans-serif; font-size: 24px; margin-bottom: 8px; color: var(--amber);">
-        ${firstTeam} vs ${secondTeam}
+        ${safeData.firstTeam} vs ${safeData.secondTeam}
       </h3>
       <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
-        <span class="ai-confidence ${confidenceClass}">${confidence} Confidence</span>
+        <span class="ai-confidence ${confidenceClass}">${safeData.confidence} Confidence</span>
         <span style="color: var(--gray); font-size: 14px;">
           Most likely: ${displayMostLikely}
         </span>
       </div>
-      ${competition ? `<div style="color: var(--gray); font-size: 13px; margin-bottom: 4px;">🏆 ${competition}</div>` : ''}
-      ${dataQuality ? `<div style="color: var(--gray); font-size: 12px;">Data Quality: ${dataQuality}</div>` : ''}
+      ${safeData.competition ? `<div style="color: var(--gray); font-size: 13px; margin-bottom: 4px;">🏆 ${safeData.competition}</div>` : ''}
+      ${safeData.dataQuality ? `<div style="color: var(--gray); font-size: 12px;">Data Quality: ${safeData.dataQuality}</div>` : ''}
     </div>
     
     <div class="ai-prediction-bars">
-      <div class="ai-prediction-bar home" style="flex: ${firstTeamWinProb}">
-        ${firstTeamWinProb.toFixed(1)}%
+      <div class="ai-prediction-bar home" style="flex: ${safeData.firstTeamWinProb}">
+        ${safeData.firstTeamWinProb.toFixed(1)}%
       </div>
-      <div class="ai-prediction-bar draw" style="flex: ${drawProb}">
-        ${drawProb.toFixed(1)}%
+      <div class="ai-prediction-bar draw" style="flex: ${safeData.drawProb}">
+        ${safeData.drawProb.toFixed(1)}%
       </div>
-      <div class="ai-prediction-bar away" style="flex: ${secondTeamWinProb}">
-        ${secondTeamWinProb.toFixed(1)}%
+      <div class="ai-prediction-bar away" style="flex: ${safeData.secondTeamWinProb}">
+        ${safeData.secondTeamWinProb.toFixed(1)}%
       </div>
     </div>
   `;
@@ -2797,119 +2814,113 @@ function displayAIAnalysis(data) {
   }
   
   // Team News section
-  if (teamNews.firstTeam || teamNews.secondTeam) {
-    html += `
-      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🏥 Team News</h4>
-      <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-        <div style="margin-bottom: 10px;">
-          <span style="color: var(--amber); font-weight: 600;">${firstTeam}:</span>
-          <p style="font-size: 13px; margin-top: 4px; color: var(--offwh);">${teamNews.firstTeam}</p>
-        </div>
-        <div>
-          <span style="color: var(--amber); font-weight: 600;">${secondTeam}:</span>
-          <p style="font-size: 13px; margin-top: 4px; color: var(--offwh);">${teamNews.secondTeam}</p>
-        </div>
+  html += `
+    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🏥 Team News</h4>
+    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+      <div style="margin-bottom: 10px;">
+        <span style="color: var(--amber); font-weight: 600;">${safeData.firstTeam}:</span>
+        <p style="font-size: 13px; margin-top: 4px; color: var(--offwh);">${firstTeamNews}</p>
       </div>
-    `;
-  }
+      <div>
+        <span style="color: var(--amber); font-weight: 600;">${safeData.secondTeam}:</span>
+        <p style="font-size: 13px; margin-top: 4px; color: var(--offwh);">${secondTeamNews}</p>
+      </div>
+    </div>
+  `;
   
   // Betting Angles section
   html += `
     <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">💰 Betting Angles</h4>
     <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-      ${bettingAngles.recommendedBet ? `
+      ${recommendedBet ? `
         <div style="margin-bottom: 10px;">
           <span style="color: var(--gray); font-size: 13px;">Recommended Bet:</span>
-          <div style="font-weight: 700; color: var(--green);">${bettingAngles.recommendedBet}</div>
+          <div style="font-weight: 700; color: var(--green);">${recommendedBet}</div>
         </div>
       ` : ''}
       
-      ${bettingAngles.valueBet ? `
+      ${valueBet ? `
         <div style="margin-bottom: 10px;">
           <span style="color: var(--gray); font-size: 13px;">Value Bet:</span>
-          <div style="font-weight: 600; color: var(--amber);">${bettingAngles.valueBet}</div>
+          <div style="font-weight: 600; color: var(--amber);">${valueBet}</div>
         </div>
       ` : ''}
       
       <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
-        ${bettingAngles.btts ? `
-          <div>
-            <span style="color: var(--gray); font-size: 12px;">BTTS</span>
-            <div><span style="font-weight: 700;">${bettingAngles.btts}</span> <span style="color: var(--gray); font-size: 11px;">(${bettingAngles.bttsConfidence || 'LOW'})</span></div>
-          </div>
-        ` : ''}
+        <div>
+          <span style="color: var(--gray); font-size: 12px;">BTTS</span>
+          <div><span style="font-weight: 700;">${btts}</span> <span style="color: var(--gray); font-size: 11px;">(${bttsConfidence})</span></div>
+        </div>
         
-        ${bettingAngles.overUnderCall ? `
-          <div>
-            <span style="color: var(--gray); font-size: 12px;">Over/Under ${bettingAngles.overUnderLine || 2.5}</span>
-            <div style="font-weight: 700;">${bettingAngles.overUnderCall}</div>
-          </div>
-        ` : ''}
+        <div>
+          <span style="color: var(--gray); font-size: 12px;">Over/Under ${overUnderLine}</span>
+          <div style="font-weight: 700;">${overUnderCall}</div>
+        </div>
         
-        ${bettingAngles.asianHandicap ? `
+        ${asianHandicap ? `
           <div>
             <span style="color: var(--gray); font-size: 12px;">Asian Handicap</span>
-            <div style="font-weight: 700;">${bettingAngles.asianHandicap}</div>
+            <div style="font-weight: 700;">${asianHandicap}</div>
           </div>
         ` : ''}
       </div>
       
-      ${bettingAngles.avoidBets && bettingAngles.avoidBets.length > 0 ? `
+      ${avoidBets.length > 0 ? `
         <div style="margin-top: 15px;">
           <span style="color: var(--red); font-size: 12px;">🚫 Avoid:</span>
-          <div style="font-size: 13px;">${bettingAngles.avoidBets.join(', ')}</div>
+          <div style="font-size: 13px;">${avoidBets.join(', ')}</div>
         </div>
       ` : ''}
     </div>
   `;
   
   // Key Factors
-  if (keyFactors.length > 0) {
+  if (safeData.keyFactors.length > 0) {
     html += `
       <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">📊 Key Factors</h4>
       <ul class="ai-insights-list">
-        ${keyFactors.map(factor => `<li><span>⚡</span> ${factor}</li>`).join('')}
+        ${safeData.keyFactors.map(factor => `<li><span>⚡</span> ${factor}</li>`).join('')}
       </ul>
     `;
   }
   
   // Risk Factors
-  if (riskFactors.length > 0) {
+  if (safeData.riskFactors.length > 0) {
     html += `
       <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--red);">⚠️ Risk Factors</h4>
       <ul class="ai-insights-list">
-        ${riskFactors.map(risk => `<li><span>⚠️</span> ${risk}</li>`).join('')}
+        ${safeData.riskFactors.map(risk => `<li><span>⚠️</span> ${risk}</li>`).join('')}
       </ul>
     `;
   }
   
   // Warning Flags
-  if (warningFlags.length > 0) {
+  if (safeData.warningFlags.length > 0) {
     html += `
       <div style="background: rgba(255, 51, 85, 0.1); border: 1px solid var(--red); border-radius: 8px; padding: 12px; margin: 15px 0;">
         <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">🚨 Warnings</div>
         <ul style="margin: 0; padding-left: 20px; color: var(--gray);">
-          ${warningFlags.map(w => `<li style="font-size: 13px;">${w}</li>`).join('')}
+          ${safeData.warningFlags.map(w => `<li style="font-size: 13px;">${w}</li>`).join('')}
         </ul>
       </div>
     `;
   }
   
   // Analyst Note
-  if (analystNote) {
+  if (safeData.analystNote) {
     html += `
       <div style="margin: 15px 0; padding: 12px; background: rgba(246,168,28,0.05); border-left: 3px solid var(--amber); border-radius: 4px;">
         <div style="color: var(--gray); font-size: 12px; margin-bottom: 4px;">📝 Analyst Note</div>
-        <div style="font-size: 14px; line-height: 1.5;">${analystNote}</div>
+        <div style="font-size: 14px; line-height: 1.5;">${safeData.analystNote}</div>
       </div>
     `;
   }
   
   // H2H Summary
-  if (h2hSummary) {
+  if (safeData.h2hSummary) {
     html += `
       <div style="margin: 15px 0; font-size: 14px; color: var(--offwh);">
-        <span style="color: var(--gray);">⚔️ H2H:</span> ${h2hSummary}
+        <span style="color: var(--gray);">⚔️ H2H:</span> ${safeData.h2hSummary}
       </div>
     `;
   }
@@ -2920,14 +2931,14 @@ function displayAIAnalysis(data) {
       <h4 style="font-family: 'Anton', sans-serif; font-size: 16px; margin: 10px 0; color: var(--amber);">📈 Form</h4>
       <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
         <div style="margin-bottom: 8px;">
-          <span style="color: var(--amber);">${firstTeam}:</span> 
+          <span style="color: var(--amber);">${safeData.firstTeam}:</span> 
           <span style="font-size: 13px;">${firstTeamForm}</span>
-          ${firstTeamMomentum ? ` <span style="color: ${firstTeamMomentum === 'positive' ? 'var(--green)' : firstTeamMomentum === 'negative' ? 'var(--red)' : 'var(--gray)'};">(${firstTeamMomentum})</span>` : ''}
+          <span style="color: ${firstTeamMomentum === 'positive' ? 'var(--green)' : firstTeamMomentum === 'negative' ? 'var(--red)' : 'var(--gray)'};">(${firstTeamMomentum})</span>
         </div>
         <div>
-          <span style="color: var(--amber);">${secondTeam}:</span> 
+          <span style="color: var(--amber);">${safeData.secondTeam}:</span> 
           <span style="font-size: 13px;">${secondTeamForm}</span>
-          ${secondTeamMomentum ? ` <span style="color: ${secondTeamMomentum === 'positive' ? 'var(--green)' : secondTeamMomentum === 'negative' ? 'var(--red)' : 'var(--gray)'};">(${secondTeamMomentum})</span>` : ''}
+          <span style="color: ${secondTeamMomentum === 'positive' ? 'var(--green)' : secondTeamMomentum === 'negative' ? 'var(--red)' : 'var(--gray)'};">(${secondTeamMomentum})</span>
         </div>
       </div>
     </div>
@@ -2938,15 +2949,15 @@ function displayAIAnalysis(data) {
     <div class="ai-stat-grid" style="margin-top: 20px;">
       <div class="ai-stat-card">
         <div class="ai-stat-label">Match ID</div>
-        <div class="ai-stat-value">${data.matchId || 'N/A'}</div>
+        <div class="ai-stat-value">${safeData.matchId}</div>
       </div>
       <div class="ai-stat-card">
         <div class="ai-stat-label">Analysis Time</div>
-        <div class="ai-stat-value">${new Date(data.timestamp || Date.now()).toLocaleTimeString()}</div>
+        <div class="ai-stat-value">${new Date(safeData.timestamp).toLocaleTimeString()}</div>
       </div>
     </div>
     
-    ${data._fromCache ? '<p style="margin-top: 16px; font-size: 12px; color: var(--gray); text-align: center;">⚡ Cached analysis (from last 30 min)</p>' : ''}
+    ${safeData.fromCache ? '<p style="margin-top: 16px; font-size: 12px; color: var(--gray); text-align: center;">⚡ Cached analysis (from last 30 min)</p>' : ''}
   `;
   
   results.innerHTML = html;
