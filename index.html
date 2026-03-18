@@ -2657,24 +2657,42 @@ function displayAIAnalysis(data) {
   const results = document.getElementById('aiResults');
   if (!results) return;
   
-  console.log("📊 Displaying analysis for:", data.homeTeam, "vs", data.awayTeam);
+  console.log("📊 Displaying analysis for:", data.firstTeam || data.homeTeam, "vs", data.secondTeam || data.awayTeam);
   console.log("Full data:", data);
   
-  // Extract all fields with proper fallbacks
-  const homeTeam = data.homeTeam || 'Home';
-  const awayTeam = data.awayTeam || 'Away';
-  const competition = data.competition || 'FIFA World Cup';
+  // Handle both old and new data formats
+  const firstTeam = data.firstTeam || data.homeTeam || 'First Team';
+  const secondTeam = data.secondTeam || data.awayTeam || 'Second Team';
+  
+  // Get prediction probabilities (handle both formats)
+  let homeWinProb = 33, drawProb = 34, awayWinProb = 33;
+  
+  if (data.prediction) {
+    if ('firstTeamWin' in data.prediction) {
+      // New format
+      homeWinProb = data.prediction.firstTeamWin;
+      drawProb = data.prediction.draw;
+      awayWinProb = data.prediction.secondTeamWin;
+    } else if ('homeWin' in data.prediction) {
+      // Old format
+      homeWinProb = data.prediction.homeWin;
+      drawProb = data.prediction.draw;
+      awayWinProb = data.prediction.awayWin;
+    }
+  }
+  
+  // Ensure numbers are valid
+  homeWinProb = Number(homeWinProb) || 33;
+  drawProb = Number(drawProb) || 34;
+  awayWinProb = Number(awayWinProb) || 33;
+  
+  // Get most likely outcome
   const mostLikely = data.mostLikely || 'UNKNOWN';
   const confidence = data.confidence || 'LOW';
-  const analystNote = data.analystNote || '';
-  const h2hSummary = data.h2hSummary || '';
-  const injuryOrNewsAlert = data.injuryOrNewsAlert || null;
+  const competition = data.competition || 'FIFA World Cup';
   const dataQuality = data.dataQuality || 'LOW';
   
-  // Prediction probabilities
-  const prediction = data.prediction || { homeWin: 33, draw: 34, awayWin: 33 };
-  
-  // Betting angles
+  // Get betting angles
   const bettingAngles = data.bettingAngles || {
     recommendedBet: 'No data',
     valueBet: null,
@@ -2686,36 +2704,56 @@ function displayAIAnalysis(data) {
     avoidBets: []
   };
   
-  // Expected goals
-  const expectedGoals = data.expectedGoals || { home: 0, away: 0, total: 0 };
+  // Get expected goals
+  const expectedGoals = data.expectedGoals || { total: 0, firstTeam: 0, secondTeam: 0 };
+  const homeExpected = expectedGoals.firstTeam || expectedGoals.home || 0;
+  const awayExpected = expectedGoals.secondTeam || expectedGoals.away || 0;
+  const totalExpected = expectedGoals.total || (homeExpected + awayExpected) || 0;
   
-  // Form summary
+  // Get form summary
   const formSummary = data.formSummary || {
-    homeTeamForm: 'No data',
-    awayTeamForm: 'No data',
-    homeMomentum: 'neutral',
-    awayMomentum: 'neutral'
+    firstTeamForm: 'No data',
+    secondTeamForm: 'No data',
+    firstTeamMomentum: 'neutral',
+    secondTeamMomentum: 'neutral'
   };
   
-  // Arrays
+  // Get arrays
   const insights = data.insights || [];
   const keyFactors = data.keyFactors || [];
   const riskFactors = data.riskFactors || [];
   const warningFlags = data.warningFlags || [];
   
+  // Get team news
+  const teamNews = data.teamNews || {
+    firstTeam: 'No injury news available',
+    secondTeam: 'No injury news available'
+  };
+  
+  // Get analyst note and H2H summary
+  const analystNote = data.analystNote || '';
+  const h2hSummary = data.h2hSummary || '';
+  
   const confidenceClass = confidence.toLowerCase() === 'high' ? 'high' : 
                          confidence.toLowerCase() === 'medium' ? 'medium' : 'low';
   
-  // Build the HTML
+  // Format the most likely outcome for display
+  const displayMostLikely = mostLikely.replace('FIRST_TEAM_WIN', `${firstTeam} Win`)
+                                      .replace('SECOND_TEAM_WIN', `${secondTeam} Win`)
+                                      .replace('HOME_WIN', `${firstTeam} Win`)
+                                      .replace('AWAY_WIN', `${secondTeam} Win`)
+                                      .replace('_', ' ');
+  
+  // Build HTML
   let html = `
     <div style="margin-bottom: 20px;">
       <h3 style="font-family: 'Anton', sans-serif; font-size: 24px; margin-bottom: 8px; color: var(--amber);">
-        ${homeTeam} vs ${awayTeam}
+        ${firstTeam} vs ${secondTeam}
       </h3>
       <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
         <span class="ai-confidence ${confidenceClass}">${confidence} Confidence</span>
         <span style="color: var(--gray); font-size: 14px;">
-          Most likely: ${mostLikely.replace('_', ' ')}
+          Most likely: ${displayMostLikely}
         </span>
       </div>
       ${competition ? `<div style="color: var(--gray); font-size: 13px; margin-bottom: 4px;">🏆 ${competition}</div>` : ''}
@@ -2723,25 +2761,42 @@ function displayAIAnalysis(data) {
     </div>
     
     <div class="ai-prediction-bars">
-      <div class="ai-prediction-bar home" style="flex: ${prediction.homeWin || 33}">
-        ${(prediction.homeWin || 33).toFixed(1)}%
+      <div class="ai-prediction-bar home" style="flex: ${homeWinProb}">
+        ${homeWinProb.toFixed(1)}%
       </div>
-      <div class="ai-prediction-bar draw" style="flex: ${prediction.draw || 33}">
-        ${(prediction.draw || 33).toFixed(1)}%
+      <div class="ai-prediction-bar draw" style="flex: ${drawProb}">
+        ${drawProb.toFixed(1)}%
       </div>
-      <div class="ai-prediction-bar away" style="flex: ${prediction.awayWin || 33}">
-        ${(prediction.awayWin || 33).toFixed(1)}%
+      <div class="ai-prediction-bar away" style="flex: ${awayWinProb}">
+        ${awayWinProb.toFixed(1)}%
       </div>
     </div>
   `;
   
   // Expected Goals section
-  if (expectedGoals.total > 0) {
+  if (totalExpected > 0) {
     html += `
       <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
         <div style="display: flex; justify-content: space-between; font-size: 14px;">
-          <span>⚽ Expected Goals: <strong>${expectedGoals.total.toFixed(2)}</strong></span>
-          <span>${expectedGoals.home.toFixed(2)} - ${expectedGoals.away.toFixed(2)}</span>
+          <span>⚽ Expected Goals: <strong>${totalExpected.toFixed(2)}</strong></span>
+          <span>${homeExpected.toFixed(2)} - ${awayExpected.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Team News section
+  if (teamNews.firstTeam || teamNews.secondTeam) {
+    html += `
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🏥 Team News</h4>
+      <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+        <div style="margin-bottom: 10px;">
+          <span style="color: var(--amber); font-weight: 600;">${firstTeam}:</span>
+          <p style="font-size: 13px; margin-top: 4px; color: var(--offwh);">${teamNews.firstTeam}</p>
+        </div>
+        <div>
+          <span style="color: var(--amber); font-weight: 600;">${secondTeam}:</span>
+          <p style="font-size: 13px; margin-top: 4px; color: var(--offwh);">${teamNews.secondTeam}</p>
         </div>
       </div>
     `;
@@ -2797,16 +2852,6 @@ function displayAIAnalysis(data) {
     </div>
   `;
   
-  // AI Insights
-  if (insights.length > 0) {
-    html += `
-      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🤖 AI Insights</h4>
-      <ul class="ai-insights-list">
-        ${insights.map(insight => `<li><span>💡</span> ${insight}</li>`).join('')}
-      </ul>
-    `;
-  }
-  
   // Key Factors
   if (keyFactors.length > 0) {
     html += `
@@ -2858,30 +2903,21 @@ function displayAIAnalysis(data) {
     `;
   }
   
-  // Injury/News Alert
-  if (injuryOrNewsAlert) {
-    html += `
-      <div style="margin: 15px 0; padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
-        <span style="color: var(--warning);">📰</span> <span style="font-size: 13px;">${injuryOrNewsAlert}</span>
-      </div>
-    `;
-  }
-  
   // Form Summary
-  if (formSummary.homeTeamForm || formSummary.awayTeamForm) {
+  if (formSummary.firstTeamForm || formSummary.secondTeamForm) {
     html += `
       <div style="margin-top: 15px;">
         <h4 style="font-family: 'Anton', sans-serif; font-size: 16px; margin: 10px 0; color: var(--amber);">📈 Form</h4>
         <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
           <div style="margin-bottom: 8px;">
-            <span style="color: var(--gray);">${homeTeam}:</span> 
-            <span style="font-size: 13px;">${formSummary.homeTeamForm || 'No data'}</span>
-            ${formSummary.homeMomentum ? ` <span style="color: var(--amber);">${formSummary.homeMomentum}</span>` : ''}
+            <span style="color: var(--amber);">${firstTeam}:</span> 
+            <span style="font-size: 13px;">${formSummary.firstTeamForm || 'No data'}</span>
+            ${formSummary.firstTeamMomentum ? ` <span style="color: ${formSummary.firstTeamMomentum === 'positive' ? 'var(--green)' : 'var(--gray)'};">(${formSummary.firstTeamMomentum})</span>` : ''}
           </div>
           <div>
-            <span style="color: var(--gray);">${awayTeam}:</span> 
-            <span style="font-size: 13px;">${formSummary.awayTeamForm || 'No data'}</span>
-            ${formSummary.awayMomentum ? ` <span style="color: var(--amber);">${formSummary.awayMomentum}</span>` : ''}
+            <span style="color: var(--amber);">${secondTeam}:</span> 
+            <span style="font-size: 13px;">${formSummary.secondTeamForm || 'No data'}</span>
+            ${formSummary.secondTeamMomentum ? ` <span style="color: ${formSummary.secondTeamMomentum === 'positive' ? 'var(--green)' : 'var(--gray)'};">(${formSummary.secondTeamMomentum})</span>` : ''}
           </div>
         </div>
       </div>
@@ -2900,6 +2936,8 @@ function displayAIAnalysis(data) {
         <div class="ai-stat-value">${new Date(data.timestamp || Date.now()).toLocaleTimeString()}</div>
       </div>
     </div>
+    
+    ${data._fromCache ? '<p style="margin-top: 16px; font-size: 12px; color: var(--gray); text-align: center;">⚡ Cached analysis (from last 30 min)</p>' : ''}
   `;
   
   results.innerHTML = html;
