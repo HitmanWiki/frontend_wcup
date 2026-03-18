@@ -2660,39 +2660,49 @@ function displayAIAnalysis(data) {
   console.log("📊 Displaying analysis for:", data.firstTeam || data.homeTeam, "vs", data.secondTeam || data.awayTeam);
   console.log("Full data:", data);
   
-  // Handle both old and new data formats
+  // Handle both old and new data formats with safe fallbacks
   const firstTeam = data.firstTeam || data.homeTeam || 'First Team';
   const secondTeam = data.secondTeam || data.awayTeam || 'Second Team';
   
-  // Get prediction probabilities (handle both formats)
-  let homeWinProb = 33, drawProb = 34, awayWinProb = 33;
+  // Extract prediction probabilities safely
+  let firstTeamWinProb = 33;
+  let drawProb = 34;
+  let secondTeamWinProb = 33;
   
   if (data.prediction) {
-    if ('firstTeamWin' in data.prediction) {
-      // New format
-      homeWinProb = data.prediction.firstTeamWin;
+    // New format (firstTeamWin/draw/secondTeamWin)
+    if (data.prediction.firstTeamWin !== undefined) {
+      firstTeamWinProb = data.prediction.firstTeamWin;
       drawProb = data.prediction.draw;
-      awayWinProb = data.prediction.secondTeamWin;
-    } else if ('homeWin' in data.prediction) {
-      // Old format
-      homeWinProb = data.prediction.homeWin;
+      secondTeamWinProb = data.prediction.secondTeamWin;
+    } 
+    // Old format (homeWin/draw/awayWin)
+    else if (data.prediction.homeWin !== undefined) {
+      firstTeamWinProb = data.prediction.homeWin;
       drawProb = data.prediction.draw;
-      awayWinProb = data.prediction.awayWin;
+      secondTeamWinProb = data.prediction.awayWin;
     }
   }
   
-  // Ensure numbers are valid
-  homeWinProb = Number(homeWinProb) || 33;
-  drawProb = Number(drawProb) || 34;
-  awayWinProb = Number(awayWinProb) || 33;
+  // Use display object if available (pre-formatted for frontend)
+  if (data.display) {
+    firstTeamWinProb = data.display.homeWinProb ?? firstTeamWinProb;
+    drawProb = data.display.drawProb ?? drawProb;
+    secondTeamWinProb = data.display.awayWinProb ?? secondTeamWinProb;
+  }
   
-  // Get most likely outcome
+  // Ensure numbers are valid and convert to numbers
+  firstTeamWinProb = Number(firstTeamWinProb) || 33;
+  drawProb = Number(drawProb) || 34;
+  secondTeamWinProb = Number(secondTeamWinProb) || 33;
+  
+  // Get metadata
   const mostLikely = data.mostLikely || 'UNKNOWN';
   const confidence = data.confidence || 'LOW';
   const competition = data.competition || 'FIFA World Cup';
   const dataQuality = data.dataQuality || 'LOW';
   
-  // Get betting angles
+  // Get betting angles with safe defaults
   const bettingAngles = data.bettingAngles || {
     recommendedBet: 'No data',
     valueBet: null,
@@ -2704,27 +2714,26 @@ function displayAIAnalysis(data) {
     avoidBets: []
   };
   
-  // Get expected goals
-  const expectedGoals = data.expectedGoals || { total: 0, firstTeam: 0, secondTeam: 0 };
-  const homeExpected = expectedGoals.firstTeam || expectedGoals.home || 0;
-  const awayExpected = expectedGoals.secondTeam || expectedGoals.away || 0;
-  const totalExpected = expectedGoals.total || (homeExpected + awayExpected) || 0;
+  // Get expected goals safely
+  const expectedGoals = data.expectedGoals || {};
+  const homeExpected = expectedGoals.firstTeam ?? expectedGoals.home ?? 0;
+  const awayExpected = expectedGoals.secondTeam ?? expectedGoals.away ?? 0;
+  const totalExpected = expectedGoals.total ?? (homeExpected + awayExpected) ?? 0;
   
-  // Get form summary
-  const formSummary = data.formSummary || {
-    firstTeamForm: 'No data',
-    secondTeamForm: 'No data',
-    firstTeamMomentum: 'neutral',
-    secondTeamMomentum: 'neutral'
-  };
+  // Get form summary safely
+  const formSummary = data.formSummary || {};
+  const firstTeamForm = formSummary.firstTeamForm || formSummary.homeTeamForm || 'No data';
+  const secondTeamForm = formSummary.secondTeamForm || formSummary.awayTeamForm || 'No data';
+  const firstTeamMomentum = formSummary.firstTeamMomentum || formSummary.homeMomentum || 'neutral';
+  const secondTeamMomentum = formSummary.secondTeamMomentum || formSummary.awayMomentum || 'neutral';
   
-  // Get arrays
+  // Get arrays safely
   const insights = data.insights || [];
   const keyFactors = data.keyFactors || [];
   const riskFactors = data.riskFactors || [];
   const warningFlags = data.warningFlags || [];
   
-  // Get team news
+  // Get team news safely
   const teamNews = data.teamNews || {
     firstTeam: 'No injury news available',
     secondTeam: 'No injury news available'
@@ -2734,17 +2743,19 @@ function displayAIAnalysis(data) {
   const analystNote = data.analystNote || '';
   const h2hSummary = data.h2hSummary || '';
   
+  // Determine confidence class
   const confidenceClass = confidence.toLowerCase() === 'high' ? 'high' : 
                          confidence.toLowerCase() === 'medium' ? 'medium' : 'low';
   
   // Format the most likely outcome for display
-  const displayMostLikely = mostLikely.replace('FIRST_TEAM_WIN', `${firstTeam} Win`)
-                                      .replace('SECOND_TEAM_WIN', `${secondTeam} Win`)
-                                      .replace('HOME_WIN', `${firstTeam} Win`)
-                                      .replace('AWAY_WIN', `${secondTeam} Win`)
-                                      .replace('_', ' ');
+  let displayMostLikely = mostLikely;
+  if (mostLikely === 'FIRST_TEAM_WIN') displayMostLikely = `${firstTeam} Win`;
+  else if (mostLikely === 'SECOND_TEAM_WIN') displayMostLikely = `${secondTeam} Win`;
+  else if (mostLikely === 'HOME_WIN') displayMostLikely = `${firstTeam} Win`;
+  else if (mostLikely === 'AWAY_WIN') displayMostLikely = `${secondTeam} Win`;
+  else displayMostLikely = displayMostLikely.replace(/_/g, ' ');
   
-  // Build HTML
+  // Build the HTML
   let html = `
     <div style="margin-bottom: 20px;">
       <h3 style="font-family: 'Anton', sans-serif; font-size: 24px; margin-bottom: 8px; color: var(--amber);">
@@ -2761,14 +2772,14 @@ function displayAIAnalysis(data) {
     </div>
     
     <div class="ai-prediction-bars">
-      <div class="ai-prediction-bar home" style="flex: ${homeWinProb}">
-        ${homeWinProb.toFixed(1)}%
+      <div class="ai-prediction-bar home" style="flex: ${firstTeamWinProb}">
+        ${firstTeamWinProb.toFixed(1)}%
       </div>
       <div class="ai-prediction-bar draw" style="flex: ${drawProb}">
         ${drawProb.toFixed(1)}%
       </div>
-      <div class="ai-prediction-bar away" style="flex: ${awayWinProb}">
-        ${awayWinProb.toFixed(1)}%
+      <div class="ai-prediction-bar away" style="flex: ${secondTeamWinProb}">
+        ${secondTeamWinProb.toFixed(1)}%
       </div>
     </div>
   `;
@@ -2866,7 +2877,7 @@ function displayAIAnalysis(data) {
   if (riskFactors.length > 0) {
     html += `
       <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--red);">⚠️ Risk Factors</h4>
-      <ul class="ai-insights-list" style="color: var(--red);">
+      <ul class="ai-insights-list">
         ${riskFactors.map(risk => `<li><span>⚠️</span> ${risk}</li>`).join('')}
       </ul>
     `;
@@ -2904,25 +2915,23 @@ function displayAIAnalysis(data) {
   }
   
   // Form Summary
-  if (formSummary.firstTeamForm || formSummary.secondTeamForm) {
-    html += `
-      <div style="margin-top: 15px;">
-        <h4 style="font-family: 'Anton', sans-serif; font-size: 16px; margin: 10px 0; color: var(--amber);">📈 Form</h4>
-        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-          <div style="margin-bottom: 8px;">
-            <span style="color: var(--amber);">${firstTeam}:</span> 
-            <span style="font-size: 13px;">${formSummary.firstTeamForm || 'No data'}</span>
-            ${formSummary.firstTeamMomentum ? ` <span style="color: ${formSummary.firstTeamMomentum === 'positive' ? 'var(--green)' : 'var(--gray)'};">(${formSummary.firstTeamMomentum})</span>` : ''}
-          </div>
-          <div>
-            <span style="color: var(--amber);">${secondTeam}:</span> 
-            <span style="font-size: 13px;">${formSummary.secondTeamForm || 'No data'}</span>
-            ${formSummary.secondTeamMomentum ? ` <span style="color: ${formSummary.secondTeamMomentum === 'positive' ? 'var(--green)' : 'var(--gray)'};">(${formSummary.secondTeamMomentum})</span>` : ''}
-          </div>
+  html += `
+    <div style="margin-top: 15px;">
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 16px; margin: 10px 0; color: var(--amber);">📈 Form</h4>
+      <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+        <div style="margin-bottom: 8px;">
+          <span style="color: var(--amber);">${firstTeam}:</span> 
+          <span style="font-size: 13px;">${firstTeamForm}</span>
+          ${firstTeamMomentum ? ` <span style="color: ${firstTeamMomentum === 'positive' ? 'var(--green)' : firstTeamMomentum === 'negative' ? 'var(--red)' : 'var(--gray)'};">(${firstTeamMomentum})</span>` : ''}
+        </div>
+        <div>
+          <span style="color: var(--amber);">${secondTeam}:</span> 
+          <span style="font-size: 13px;">${secondTeamForm}</span>
+          ${secondTeamMomentum ? ` <span style="color: ${secondTeamMomentum === 'positive' ? 'var(--green)' : secondTeamMomentum === 'negative' ? 'var(--red)' : 'var(--gray)'};">(${secondTeamMomentum})</span>` : ''}
         </div>
       </div>
-    `;
-  }
+    </div>
+  `;
   
   // Metadata
   html += `
