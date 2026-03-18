@@ -2606,6 +2606,9 @@ function goPage(page, btn) {
 // ══════════════════════════════════════════════════════════════════
 //  AI ANALYSIS FUNCTIONS - UPDATED WITH DEBUG
 // ══════════════════════════════════════════════════════════════════
+a// ══════════════════════════════════════════════════════════════════
+//  AI ANALYSIS FUNCTIONS - SINGLE CLEAN VERSION
+// ══════════════════════════════════════════════════════════════════
 async function showAIAnalysis(matchId) {
   const modal = document.getElementById('aiModal');
   const loading = document.getElementById('aiLoading');
@@ -2655,31 +2658,68 @@ function displayAIAnalysis(data) {
   if (!results) return;
   
   console.log("📊 Displaying analysis for:", data.homeTeam, "vs", data.awayTeam);
+  console.log("Full data:", data);
   
-  // Handle both response formats
-  const analysis = data.analysis || data;
-  const prediction = analysis.prediction || { homeWin: 33, draw: 33, awayWin: 33 };
-  const insights = analysis.insights || [];
-  const keyFactors = analysis.keyFactors || [];
+  // Extract all fields with proper fallbacks
+  const homeTeam = data.homeTeam || 'Home';
+  const awayTeam = data.awayTeam || 'Away';
+  const competition = data.competition || 'FIFA World Cup';
+  const mostLikely = data.mostLikely || 'UNKNOWN';
+  const confidence = data.confidence || 'LOW';
+  const analystNote = data.analystNote || '';
+  const h2hSummary = data.h2hSummary || '';
+  const injuryOrNewsAlert = data.injuryOrNewsAlert || null;
+  const dataQuality = data.dataQuality || 'LOW';
   
-  const confidenceClass = 
-    analysis.confidence === 'High' ? 'high' :
-    analysis.confidence === 'Medium' ? 'medium' : 'low';
+  // Prediction probabilities
+  const prediction = data.prediction || { homeWin: 33, draw: 34, awayWin: 33 };
   
-  const homeTeam = data.homeTeam || analysis.homeTeam || 'Home';
-  const awayTeam = data.awayTeam || analysis.awayTeam || 'Away';
+  // Betting angles
+  const bettingAngles = data.bettingAngles || {
+    recommendedBet: 'No data',
+    valueBet: null,
+    btts: 'UNCERTAIN',
+    bttsConfidence: 'LOW',
+    overUnderLine: 2.5,
+    overUnderCall: 'UNCERTAIN',
+    asianHandicap: null,
+    avoidBets: []
+  };
   
-  results.innerHTML = `
+  // Expected goals
+  const expectedGoals = data.expectedGoals || { home: 0, away: 0, total: 0 };
+  
+  // Form summary
+  const formSummary = data.formSummary || {
+    homeTeamForm: 'No data',
+    awayTeamForm: 'No data',
+    homeMomentum: 'neutral',
+    awayMomentum: 'neutral'
+  };
+  
+  // Arrays
+  const insights = data.insights || [];
+  const keyFactors = data.keyFactors || [];
+  const riskFactors = data.riskFactors || [];
+  const warningFlags = data.warningFlags || [];
+  
+  const confidenceClass = confidence.toLowerCase() === 'high' ? 'high' : 
+                         confidence.toLowerCase() === 'medium' ? 'medium' : 'low';
+  
+  // Build the HTML
+  let html = `
     <div style="margin-bottom: 20px;">
       <h3 style="font-family: 'Anton', sans-serif; font-size: 24px; margin-bottom: 8px; color: var(--amber);">
         ${homeTeam} vs ${awayTeam}
       </h3>
-      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-        <span class="ai-confidence ${confidenceClass}">${analysis.confidence || 'Medium'} Confidence</span>
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+        <span class="ai-confidence ${confidenceClass}">${confidence} Confidence</span>
         <span style="color: var(--gray); font-size: 14px;">
-          Most likely: ${(analysis.mostLikely || 'UNKNOWN').replace('_', ' ')}
+          Most likely: ${mostLikely.replace('_', ' ')}
         </span>
       </div>
+      ${competition ? `<div style="color: var(--gray); font-size: 13px; margin-bottom: 4px;">🏆 ${competition}</div>` : ''}
+      ${dataQuality ? `<div style="color: var(--gray); font-size: 12px;">Data Quality: ${dataQuality}</div>` : ''}
     </div>
     
     <div class="ai-prediction-bars">
@@ -2693,24 +2733,164 @@ function displayAIAnalysis(data) {
         ${(prediction.awayWin || 33).toFixed(1)}%
       </div>
     </div>
-    
-    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🤖 AI Insights</h4>
-    <ul class="ai-insights-list">
-      ${insights.length > 0 ? 
-        insights.map(insight => `<li><span>💡</span> ${insight}</li>`).join('') :
-        '<li><span>💡</span> No insights available</li>'
-      }
-    </ul>
-    
-    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">📊 Key Factors</h4>
-    <ul class="ai-insights-list">
-      ${keyFactors.length > 0 ?
-        keyFactors.map(factor => `<li><span>⚡</span> ${factor}</li>`).join('') :
-        '<li><span>⚡</span> No key factors identified</li>'
-      }
-    </ul>
-    
-    <div class="ai-stat-grid">
+  `;
+  
+  // Expected Goals section
+  if (expectedGoals.total > 0) {
+    html += `
+      <div style="margin: 15px 0; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px;">
+        <div style="display: flex; justify-content: space-between; font-size: 14px;">
+          <span>⚽ Expected Goals: <strong>${expectedGoals.total.toFixed(2)}</strong></span>
+          <span>${expectedGoals.home.toFixed(2)} - ${expectedGoals.away.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Betting Angles section
+  html += `
+    <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">💰 Betting Angles</h4>
+    <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+      ${bettingAngles.recommendedBet ? `
+        <div style="margin-bottom: 10px;">
+          <span style="color: var(--gray); font-size: 13px;">Recommended Bet:</span>
+          <div style="font-weight: 700; color: var(--green);">${bettingAngles.recommendedBet}</div>
+        </div>
+      ` : ''}
+      
+      ${bettingAngles.valueBet ? `
+        <div style="margin-bottom: 10px;">
+          <span style="color: var(--gray); font-size: 13px;">Value Bet:</span>
+          <div style="font-weight: 600; color: var(--amber);">${bettingAngles.valueBet}</div>
+        </div>
+      ` : ''}
+      
+      <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 10px;">
+        ${bettingAngles.btts ? `
+          <div>
+            <span style="color: var(--gray); font-size: 12px;">BTTS</span>
+            <div><span style="font-weight: 700;">${bettingAngles.btts}</span> <span style="color: var(--gray); font-size: 11px;">(${bettingAngles.bttsConfidence || 'LOW'})</span></div>
+          </div>
+        ` : ''}
+        
+        ${bettingAngles.overUnderCall ? `
+          <div>
+            <span style="color: var(--gray); font-size: 12px;">Over/Under ${bettingAngles.overUnderLine || 2.5}</span>
+            <div style="font-weight: 700;">${bettingAngles.overUnderCall}</div>
+          </div>
+        ` : ''}
+        
+        ${bettingAngles.asianHandicap ? `
+          <div>
+            <span style="color: var(--gray); font-size: 12px;">Asian Handicap</span>
+            <div style="font-weight: 700;">${bettingAngles.asianHandicap}</div>
+          </div>
+        ` : ''}
+      </div>
+      
+      ${bettingAngles.avoidBets && bettingAngles.avoidBets.length > 0 ? `
+        <div style="margin-top: 15px;">
+          <span style="color: var(--red); font-size: 12px;">🚫 Avoid:</span>
+          <div style="font-size: 13px;">${bettingAngles.avoidBets.join(', ')}</div>
+        </div>
+      ` : ''}
+    </div>
+  `;
+  
+  // AI Insights
+  if (insights.length > 0) {
+    html += `
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">🤖 AI Insights</h4>
+      <ul class="ai-insights-list">
+        ${insights.map(insight => `<li><span>💡</span> ${insight}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Key Factors
+  if (keyFactors.length > 0) {
+    html += `
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--amber);">📊 Key Factors</h4>
+      <ul class="ai-insights-list">
+        ${keyFactors.map(factor => `<li><span>⚡</span> ${factor}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Risk Factors
+  if (riskFactors.length > 0) {
+    html += `
+      <h4 style="font-family: 'Anton', sans-serif; font-size: 18px; margin: 20px 0 10px; color: var(--red);">⚠️ Risk Factors</h4>
+      <ul class="ai-insights-list" style="color: var(--red);">
+        ${riskFactors.map(risk => `<li><span>⚠️</span> ${risk}</li>`).join('')}
+      </ul>
+    `;
+  }
+  
+  // Warning Flags
+  if (warningFlags.length > 0) {
+    html += `
+      <div style="background: rgba(255, 51, 85, 0.1); border: 1px solid var(--red); border-radius: 8px; padding: 12px; margin: 15px 0;">
+        <div style="color: var(--red); font-weight: 700; margin-bottom: 8px;">🚨 Warnings</div>
+        <ul style="margin: 0; padding-left: 20px; color: var(--gray);">
+          ${warningFlags.map(w => `<li style="font-size: 13px;">${w}</li>`).join('')}
+        </ul>
+      </div>
+    `;
+  }
+  
+  // Analyst Note
+  if (analystNote) {
+    html += `
+      <div style="margin: 15px 0; padding: 12px; background: rgba(246,168,28,0.05); border-left: 3px solid var(--amber); border-radius: 4px;">
+        <div style="color: var(--gray); font-size: 12px; margin-bottom: 4px;">📝 Analyst Note</div>
+        <div style="font-size: 14px; line-height: 1.5;">${analystNote}</div>
+      </div>
+    `;
+  }
+  
+  // H2H Summary
+  if (h2hSummary) {
+    html += `
+      <div style="margin: 15px 0; font-size: 14px; color: var(--offwh);">
+        <span style="color: var(--gray);">⚔️ H2H:</span> ${h2hSummary}
+      </div>
+    `;
+  }
+  
+  // Injury/News Alert
+  if (injuryOrNewsAlert) {
+    html += `
+      <div style="margin: 15px 0; padding: 8px; background: rgba(245, 158, 11, 0.1); border-radius: 6px;">
+        <span style="color: var(--warning);">📰</span> <span style="font-size: 13px;">${injuryOrNewsAlert}</span>
+      </div>
+    `;
+  }
+  
+  // Form Summary
+  if (formSummary.homeTeamForm || formSummary.awayTeamForm) {
+    html += `
+      <div style="margin-top: 15px;">
+        <h4 style="font-family: 'Anton', sans-serif; font-size: 16px; margin: 10px 0; color: var(--amber);">📈 Form</h4>
+        <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+          <div style="margin-bottom: 8px;">
+            <span style="color: var(--gray);">${homeTeam}:</span> 
+            <span style="font-size: 13px;">${formSummary.homeTeamForm || 'No data'}</span>
+            ${formSummary.homeMomentum ? ` <span style="color: var(--amber);">${formSummary.homeMomentum}</span>` : ''}
+          </div>
+          <div>
+            <span style="color: var(--gray);">${awayTeam}:</span> 
+            <span style="font-size: 13px;">${formSummary.awayTeamForm || 'No data'}</span>
+            ${formSummary.awayMomentum ? ` <span style="color: var(--amber);">${formSummary.awayMomentum}</span>` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // Metadata
+  html += `
+    <div class="ai-stat-grid" style="margin-top: 20px;">
       <div class="ai-stat-card">
         <div class="ai-stat-label">Match ID</div>
         <div class="ai-stat-value">${data.matchId || 'N/A'}</div>
@@ -2720,9 +2900,9 @@ function displayAIAnalysis(data) {
         <div class="ai-stat-value">${new Date(data.timestamp || Date.now()).toLocaleTimeString()}</div>
       </div>
     </div>
-    
-    ${data.note ? `<p style="margin-top: 16px; font-size: 12px; color: var(--gray); text-align: center;">${data.note}</p>` : ''}
   `;
+  
+  results.innerHTML = html;
 }
 
 function closeAIModal() {
