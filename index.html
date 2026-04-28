@@ -235,7 +235,7 @@ nav {
 .hero-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 500px;
+  grid-template-columns: 1.2fr 1fr;
   min-height: calc(100vh - 72px);
   position: relative;
   isolation: isolate;
@@ -503,9 +503,10 @@ nav {
   position: relative;
   display: flex;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start; /* Changed from center to flex-start */
   overflow: visible;
   z-index: 10;
+   margin-left: -120px;  /* Pushes the GIF left significantly */
 }
 
 .spotlight {
@@ -569,8 +570,8 @@ nav {
 }
 
 .fb2 {
-  top: 40%;
-  right: -24px;
+  top: 30%;
+  right: -10px;
   animation: floatBadge2 6s ease-in-out infinite;
 }
 
@@ -1972,7 +1973,7 @@ table.btbl {
   }
   
   .htxt {
-    padding: 28px 28px 60px;
+    padding: 28px 28px 20px;
   }
   
   .htxt::before {
