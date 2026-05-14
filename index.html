@@ -3597,6 +3597,8 @@ async function api(path) {
   } catch { return null; }
 }
 
+// REPLACE the existing loadStats() function:
+
 async function loadStats() {
   const data = await api('/stats');
   if (!data) return;
@@ -3611,8 +3613,10 @@ async function loadStats() {
   $('fbusers').textContent = data.uniqueUsers || 0;
   $('fbmatches').textContent = data.matchCount || 0;
   $('fbpool-hero').textContent = volume;
+  
+  // Update group counts in tabs
+  renderGroupTabs();
 }
-
 function countUp(id, target) {
   const el = $(id);
   if (!el) return;
@@ -3629,9 +3633,11 @@ function countUp(id, target) {
 // ══════════════════════════════════════════════════════════════════
 //  MATCHES FUNCTIONS
 // ══════════════════════════════════════════════════════════════════
+// REPLACE the existing loadMatches() function:
+
 async function loadMatches() {
   const data = await api('/matches');
-  if (!data) {
+  if (!data || !data.matches) {
     $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
     return;
   }
@@ -3641,32 +3647,36 @@ async function loadMatches() {
   // Build groups from matches
   groupsMap.clear();
   allMatchesRaw.forEach(match => {
-    // Extract group from match data (adjust based on your backend)
-    let group = match.group || match.stage || 'Group Stage';
+    let group = match.group || match.round || 'Group Stage';
     
-    // If your backend has groupLetter (A, B, C, etc.)
-    if (match.groupLetter) group = `Group ${match.groupLetter}`;
-    if (match.stage === 'knockout') group = 'Knockout';
-    if (match.stage === 'final') group = 'Final';
+    if (match.group) group = `Group ${match.group}`;
+    if (match.round === 'Round of 32' || match.round === 'Round of 16' || 
+        match.round === 'Quarter Final' || match.round === 'Semi Final') {
+      group = 'Knockout';
+    }
+    if (match.round === 'Final' || match.round === 'Third Place') {
+      group = 'Final';
+    }
     
     if (!groupsMap.has(group)) groupsMap.set(group, []);
     groupsMap.get(group).push(match);
   });
   
-  // Add 'All' option
-  groupsMap.set('all', allMatchesRaw);
-  
-  // Render group tabs and show matches
   renderGroupTabs();
   applyGroupFilter();
   $('mchip').textContent = allMatchesRaw.length + ' Matches';
 }
+// REPLACE the renderGroupTabs() function:
+
 function renderGroupTabs() {
   const container = document.getElementById('groupTabsContainer');
   if (!container) return;
   
-  // Define all World Cup 2026 groups
-  const groupOrder = ['All', 'Group A', 'Group B', 'Group C', 'Group D', 'Group E', 'Group F', 'Group G', 'Group H', 'Knockout', 'Final'];
+  // Define all World Cup 2026 groups in order
+  const groupOrder = ['All', 'Group A', 'Group B', 'Group C', 'Group D', 
+                      'Group E', 'Group F', 'Group G', 'Group H',
+                      'Group I', 'Group J', 'Group K', 'Group L',
+                      'Knockout', 'Final'];
   
   let html = '';
   
@@ -3676,19 +3686,19 @@ function renderGroupTabs() {
     if (group === 'All') {
       matchesInGroup = allMatchesRaw;
     } else if (group === 'Knockout') {
-      matchesInGroup = allMatchesRaw.filter(m => m.stage === 'knockout' || m.round?.includes('16') || m.round?.includes('quarter') || m.round?.includes('semi'));
+      matchesInGroup = allMatchesRaw.filter(m => 
+        ['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(m.round)
+      );
     } else if (group === 'Final') {
-      matchesInGroup = allMatchesRaw.filter(m => m.round === 'final' || m.stage === 'final');
+      matchesInGroup = allMatchesRaw.filter(m => 
+        ['Final', 'Third Place'].includes(m.round)
+      );
     } else if (group.startsWith('Group ')) {
       const groupLetter = group.replace('Group ', '');
-      matchesInGroup = allMatchesRaw.filter(m => 
-        m.group === groupLetter || 
-        m.groupLetter === groupLetter ||
-        m.groupName === groupLetter ||
-        (m.homeTeam && getGroupFromTeam(m.homeTeam) === groupLetter)
-      );
+      matchesInGroup = allMatchesRaw.filter(m => m.group === groupLetter);
     }
     
+    // Only show groups that have matches
     if (matchesInGroup.length === 0 && group !== 'All') return;
     
     const activeClass = currentGroupFilter === group ? 'active' : '';
@@ -3738,6 +3748,8 @@ function applyGroupFilter() {
   document.getElementById('mchip').textContent = `${matchesToShow.length} Matches · ${displayName}`;
 }
 
+// REPLACE the applyGroupFilter() function:
+
 function applyGroupFilter() {
   let matchesToShow = [];
   
@@ -3745,23 +3757,17 @@ function applyGroupFilter() {
     matchesToShow = allMatchesRaw;
   } else if (currentGroupFilter === 'Knockout') {
     matchesToShow = allMatchesRaw.filter(m => 
-      m.stage === 'knockout' || 
-      m.round?.includes('16') || 
-      m.round?.includes('quarter') || 
-      m.round?.includes('semi')
+      ['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(m.round)
     );
   } else if (currentGroupFilter === 'Final') {
     matchesToShow = allMatchesRaw.filter(m => 
-      m.round === 'final' || m.stage === 'final'
+      ['Final', 'Third Place'].includes(m.round)
     );
   } else if (currentGroupFilter.startsWith('Group ')) {
     const groupLetter = currentGroupFilter.replace('Group ', '');
-    matchesToShow = allMatchesRaw.filter(m => 
-      m.group === groupLetter || 
-      m.groupLetter === groupLetter ||
-      m.groupName === groupLetter ||
-      getGroupFromTeam(m.homeTeam) === groupLetter
-    );
+    matchesToShow = allMatchesRaw.filter(m => m.group === groupLetter);
+  } else {
+    matchesToShow = allMatchesRaw;
   }
   
   renderMatchesByGroup(matchesToShow);
@@ -3785,18 +3791,20 @@ function renderMatchesByGroup(matches) {
   grid.innerHTML = matches.map(match => renderMatchCard(match)).join('');
 }
 
-function renderMatches() {
-  // Use the current filter instead of all matches
-  const matchesToShow = groupsMap.get(currentGroupFilter) || allMatchesRaw;
-  const grid = $('mgrid');
-  
-  if (!matchesToShow.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;padding:64px;text-align:center"><div style="font-size:64px;margin-bottom:16px">⚽</div><div style="font-family:Anton,sans-serif;font-size:32px">No Matches in this Group</div></div>';
+function renderMatchesByGroup(matches) {
+  const grid = document.getElementById('mgrid');
+  if (!matches.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1;padding:64px;text-align:center">
+      <div style="font-size:64px;margin-bottom:16px">🏆</div>
+      <div style="font-family:Anton,sans-serif;font-size:28px;color:var(--gray)">No matches in ${currentGroupFilter}</div>
+    </div>`;
     return;
   }
   
-  grid.innerHTML = matchesToShow.map(match => renderMatchCard(match)).join('');
+  grid.innerHTML = matches.map(match => renderMatchCard(match)).join('');
 }
+
+// REPLACE the existing renderMatchCard() function:
 
 function renderMatchCard(m) {
   const homeFlag = getFlagUrl(m.homeTeam);
@@ -3805,17 +3813,48 @@ function renderMatchCard(m) {
   const dateStr = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' · ' + 
                   date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   
-  const statusClass = m.settled ? 'sd' : m.bettingOpen ? 'so' : 'sc2';
-  const statusText = m.settled ? (m.outcome || 'Settled').replace(/_/g, ' ') : 
-                     m.bettingOpen ? 'Open' : 'Closed';
+  // Check if match is settled (finished with scores)
+  const isSettled = m.settled || m.status === 'FINISHED';
+  const isOpen = m.bettingOpen !== false && m.status === 'SCHEDULED';
+  const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
+  
+  let statusClass = 'sc2'; // Closed default
+  let statusText = 'Closed';
+  
+  if (isSettled) {
+    statusClass = 'sd';
+    statusText = (m.winner || 'Finished').replace(/_/g, ' ');
+  } else if (isLive) {
+    statusClass = 'so';
+    statusText = '🔴 LIVE';
+  } else if (isOpen) {
+    statusClass = 'so';
+    statusText = 'Open';
+  }
+  
   const odds = m.odds || { home: 33.33, draw: 33.33, away: 33.33 };
   
-  const betUI = m.bettingOpen && !m.settled ? 
-    `<div class="bet-ui">
+  // Score display
+  let scoreDisplay = 'VS';
+  if (isSettled || isLive) {
+    scoreDisplay = `${m.homeScore || 0} - ${m.awayScore || 0}`;
+  }
+  
+  const scoreClass = (isSettled || isLive) ? 'sctxt' : 'vstxt';
+  
+  // Betting UI
+  let betUI = '';
+  if (isOpen && !isSettled) {
+    betUI = `
+    <div class="bet-ui">
       <div class="bchoices">
-        <button class="bch" onclick="selectChoice(${m.id},'HOME_WIN',this)" data-mid="${m.id}"><img src="${homeFlag}" style="width:20px;height:15px;margin-right:5px;vertical-align:middle;"> ${m.homeTeam}</button>
+        <button class="bch" onclick="selectChoice(${m.id},'HOME_WIN',this)" data-mid="${m.id}">
+          <img src="${homeFlag}" style="width:20px;height:15px;margin-right:5px;vertical-align:middle;"> ${m.homeTeam}
+        </button>
         <button class="bch" onclick="selectChoice(${m.id},'DRAW',this)" data-mid="${m.id}">🤝 Draw</button>
-        <button class="bch" onclick="selectChoice(${m.id},'AWAY_WIN',this)" data-mid="${m.id}"><img src="${awayFlag}" style="width:20px;height:15px;margin-right:5px;vertical-align:middle;"> ${m.awayTeam}</button>
+        <button class="bch" onclick="selectChoice(${m.id},'AWAY_WIN',this)" data-mid="${m.id}">
+          <img src="${awayFlag}" style="width:20px;height:15px;margin-right:5px;vertical-align:middle;"> ${m.awayTeam}
+        </button>
       </div>
       <div class="brow">
         <input class="bin" id="bet-${m.id}" type="number" min="1" step="1" placeholder="CLUTCH amount..."/>
@@ -3823,14 +3862,28 @@ function renderMatchCard(m) {
       </div>
       <div class="pstrip">
         <span class="ptag">Pool: <b>${parseFloat(m.pools?.total || 0).toFixed(0)} CLUTCH</b></span>
-        <span class="ptag">Closes: <b>${new Date(m.betDeadline * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></span>
+        <span class="ptag">Closes: <b>${new Date((m.betDeadline || m.startTime - 300) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></span>
       </div>
-    </div>` :
-    m.settled ? 
-    `<div style="padding-top:12px;text-align:center">
-      <span class="rp rw">${(m.outcome || '').replace(/_/g, ' ')}</span>
-    </div>` :
-    `<div style="padding-top:10px;color:var(--gray);font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700">BETTING CLOSED</div>`;
+    </div>`;
+  } else if (isLive) {
+    betUI = `
+    <div style="padding-top:12px;text-align:center">
+      <span class="rp rw" style="animation: pulseDot 1.5s ease-in-out infinite;">🔴 LIVE</span>
+      <div style="color:var(--gray);font-size:12px;margin-top:8px;">Betting Closed</div>
+    </div>`;
+  } else if (isSettled) {
+    const resultClass = m.winner === 'HOME_WIN' ? 'rw' : m.winner === 'AWAY_WIN' ? 'rl' : 'rpe';
+    betUI = `
+    <div style="padding-top:12px;text-align:center">
+      <span class="rp ${resultClass}">${(m.winner || 'Finished').replace(/_/g, ' ')}</span>
+      <div style="color:var(--gray);font-size:12px;margin-top:8px;">Match Completed</div>
+    </div>`;
+  } else {
+    betUI = `
+    <div style="padding-top:10px;color:var(--gray);font-family:Rajdhani,sans-serif;font-size:13px;font-weight:700">
+      BETTING CLOSED
+    </div>`;
+  }
   
   return `<div class="mc">
     <div class="mc-bar"></div>
@@ -3839,6 +3892,7 @@ function renderMatchCard(m) {
         <span class="mc-date">${dateStr}</span>
         <span class="stag ${statusClass}"><span class="sp"></span>${statusText}</span>
       </div>
+      ${m.stadium ? `<div style="color:var(--gray);font-size:11px;margin-bottom:8px;">🏟️ ${m.stadium}, ${m.city || ''}</div>` : ''}
       <div class="mteams">
         <div class="tblk">
           <div class="flag">
@@ -3846,7 +3900,9 @@ function renderMatchCard(m) {
           </div>
           <div class="tnm">${m.homeTeam}</div>
         </div>
-        <div class="vsb">${m.settled && m.score ? `<div class="sctxt">${m.score}</div>` : '<div class="vstxt">VS</div>'}</div>
+        <div class="vsb">
+          <div class="${scoreClass}">${scoreDisplay}</div>
+        </div>
         <div class="tblk">
           <div class="flag">
             <img src="${awayFlag}" alt="${m.awayTeam}">
@@ -3866,10 +3922,11 @@ function renderMatchCard(m) {
           <div class="os a" style="flex:${odds.away}">${odds.away >= 14 ? odds.away.toFixed(0) + '%' : ''}</div>
         </div>
       </div>
+      ${!isSettled ? `
       <button class="ai-btn" onclick="showAIAnalysis(${m.id})">
         <span class="ai-icon">🤖</span>
         <span>AI Match Analysis</span>
-      </button>
+      </button>` : ''}
       ${betUI}
     </div>
   </div>`;
@@ -3880,6 +3937,8 @@ function selectChoice(matchId, choice, btn) {
   btn.classList.add('sel');
   selectedChoice[matchId] = choice;
 }
+
+// REPLACE the existing placeBet() function:
 
 async function placeBet(matchId) {
   if (!wallet) return toast('Connect wallet first', 'er');
@@ -3898,13 +3957,31 @@ async function placeBet(matchId) {
     toast('Approving token spend...');
     const allowance = await token.allowance(wallet.address, CFG.BETTING);
     if (allowance < amount) {
-      const tx = await token.approve(CFG.BETTING, amount);
-      await tx.wait();
+      const txApprove = await token.approve(CFG.BETTING, amount);
+      await txApprove.wait();
     }
     
     toast('Placing bet on-chain...');
     const tx = await betting.placeBet(matchId, OUTCOME[selectedChoice[matchId]], amount);
     await tx.wait();
+    
+    // ─── RECORD BET IN BACKEND ────────────────────────────────
+    try {
+      await fetch(CFG.API + '/bets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          matchId: matchId,
+          userAddress: wallet.address,
+          prediction: selectedChoice[matchId],
+          amount: amountInput,
+          txHash: tx.hash
+        })
+      });
+    } catch (apiErr) {
+      console.warn('Backend recording failed (non-critical):', apiErr);
+    }
+    // ─────────────────────────────────────────────────────────
     
     toast('Bet placed successfully! 🎉', 'ok');
     setTimeout(loadMatches, 3000);
@@ -3918,6 +3995,8 @@ async function placeBet(matchId) {
 // ══════════════════════════════════════════════════════════════════
 //  ULTIMATE BET FUNCTIONS
 // ══════════════════════════════════════════════════════════════════
+// REPLACE the existing renderUltimate() function:
+
 async function renderUltimate() {
   const data = await api('/ultimate');
   if (!data) return;
@@ -3936,6 +4015,8 @@ async function renderUltimate() {
   if (data.settled && data.winner) {
     $('usettled').style.display = 'block';
     $('uwin').textContent = data.winner;
+  } else {
+    $('usettled').style.display = 'none';
   }
   
   $('tgrid').innerHTML = TEAM_PICKS.map(team => 
@@ -3967,6 +4048,8 @@ function selectUltimateTeam(team, el) {
   el.classList.add('sel');
 }
 
+// REPLACE the existing placeUltimateBet() function:
+
 async function placeUltimateBet() {
   if (!wallet) return toast('Connect wallet first', 'er');
   if (!selectedUltimateTeam) return toast('Select a team first', 'er');
@@ -3984,13 +4067,30 @@ async function placeUltimateBet() {
     toast('Approving...');
     const allowance = await token.allowance(wallet.address, CFG.BETTING);
     if (allowance < amount) {
-      const tx = await token.approve(CFG.BETTING, amount);
-      await tx.wait();
+      const txApprove = await token.approve(CFG.BETTING, amount);
+      await txApprove.wait();
     }
     
     toast('Placing ultimate bet...');
     const tx = await betting.placeUltimateBet(selectedUltimateTeam, amount);
     await tx.wait();
+    
+    // ─── RECORD ULTIMATE BET IN BACKEND ──────────────────────
+    try {
+      await fetch(CFG.API + '/ultimate-bets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userAddress: wallet.address,
+          team: selectedUltimateTeam,
+          amount: amountInput,
+          txHash: tx.hash
+        })
+      });
+    } catch (apiErr) {
+      console.warn('Backend recording failed (non-critical):', apiErr);
+    }
+    // ─────────────────────────────────────────────────────────
     
     toast(`Bet on ${selectedUltimateTeam} placed! 🏆`, 'ok');
     renderUltimate();
@@ -4004,6 +4104,8 @@ async function placeUltimateBet() {
 // ══════════════════════════════════════════════════════════════════
 //  MY BETS & LEADERBOARD
 // ══════════════════════════════════════════════════════════════════
+// REPLACE the existing loadMyBets() function:
+
 async function loadMyBets() {
   if (!wallet) return;
   
@@ -4015,36 +4117,56 @@ async function loadMyBets() {
     return;
   }
   
-  const allBets = [
-    ...(data.matchBets || []),
-    ...(data.ultimateBets || []).map(b => ({
-      home_team: '🏆 Ultimate',
-      away_team: '',
-      prediction: b.team,
-      amount: b.amount,
-      match_outcome: null,
-      claimed: b.claimed,
-      match_id: null
-    }))
-  ];
+  // Combine match bets and ultimate bets
+  let allBets = [];
+  
+  // Format match bets
+  (data.matchBets || []).forEach(bet => {
+    const isSettled = bet.match_outcome && bet.match_status === 'FINISHED';
+    const isWin = isSettled && bet.prediction === bet.match_outcome;
+    const isPending = !isSettled;
+    
+    allBets.push({
+      match: `${bet.home_team || 'TBD'} vs ${bet.away_team || 'TBD'}`,
+      prediction: (bet.prediction || '').replace(/_/g, ' '),
+      amount: bet.amount,
+      result: isSettled ? (bet.match_outcome || '').replace(/_/g, ' ') : 'Pending',
+      resultClass: isPending ? 'rpe' : isWin ? 'rw' : 'rl',
+      resultLabel: isPending ? 'Pending' : isWin ? 'Won' : 'Lost',
+      claimed: bet.claimed,
+      matchId: bet.match_id,
+      betIndex: bet.id
+    });
+  });
+  
+  // Format ultimate bets
+  (data.ultimateBets || []).forEach(bet => {
+    allBets.push({
+      match: `🏆 Ultimate: ${bet.team}`,
+      prediction: bet.team,
+      amount: bet.amount,
+      result: bet.claimed ? 'Won' : 'Pending',
+      resultClass: bet.claimed ? 'rw' : 'rpe',
+      resultLabel: bet.claimed ? 'Won' : 'Pending',
+      claimed: bet.claimed,
+      matchId: null,
+      betIndex: bet.id
+    });
+  });
   
   container.innerHTML = '<div class="btbl-w"><table class="btbl"><thead><tr><th>Match</th><th>Prediction</th><th>Amount</th><th>Result</th><th>Status</th></tr></thead><tbody>' + 
     allBets.map((bet, index) => {
-      const isWin = bet.match_outcome && bet.prediction === bet.match_outcome;
-      const isPending = !bet.match_outcome || bet.match_outcome === 'PENDING';
-      const resultClass = isPending ? 'rpe' : isWin ? 'rw' : 'rl';
-      const resultLabel = isPending ? 'Pending' : isWin ? 'Won' : 'Lost';
-      const amount = parseFloat(formatEther(bet.amount)).toFixed(2);
+      const amount = parseFloat(bet.amount || 0).toFixed(2);
       
       return `<tr>
-        <td><b>${bet.home_team}</b>${bet.away_team ? ' vs ' + bet.away_team : ''}</td>
-        <td>${(bet.prediction || '').replace(/_/g, ' ')}</td>
+        <td><b>${bet.match}</b></td>
+        <td>${bet.prediction}</td>
         <td style="font-weight:700">${amount} <span style="color:var(--amber)">CLUTCH</span></td>
-        <td>${bet.match_outcome ? bet.match_outcome.replace(/_/g, ' ') : '—'}</td>
+        <td>${bet.result}</td>
         <td>
-          <span class="rp ${resultClass}">${resultLabel}</span>
-          ${isWin && !bet.claimed && bet.match_id !== null ? 
-            `<button class="clm" onclick="claimWinnings(${bet.match_id}, ${index})">Claim</button>` : ''}
+          <span class="rp ${bet.resultClass}">${bet.resultLabel}</span>
+          ${bet.resultClass === 'rw' && !bet.claimed && bet.matchId ? 
+            `<button class="clm" onclick="claimWinnings(${bet.matchId}, ${index})">Claim</button>` : ''}
         </td>
       </tr>`;
     }).join('') + '</tbody></table></div>';
@@ -4075,26 +4197,31 @@ async function claimWinnings(matchId, betIndex) {
   }
 }
 
+// REPLACE the existing loadLeaderboard() function:
+
 async function loadLeaderboard() {
   const data = await api('/leaderboard');
   const container = $('lb-body');
   
   if (!data?.leaderboard?.length) {
-    container.innerHTML = '<div class="empty-st"><div class="emp-ic">🥇</div><h3>No Data Yet</h3></div>';
+    container.innerHTML = '<div class="empty-st"><div class="emp-ic">🥇</div><h3>No Data Yet</h3><p>Leaderboard will appear once predictions are placed</p></div>';
     return;
   }
   
   container.innerHTML = data.leaderboard.map((row, index) => {
-    const amount = parseFloat(formatEther(row.total_wagered || 0)).toFixed(0);
+    const amount = parseFloat(row.total_wagered || 0).toFixed(0);
+    const wins = row.wins_claimed || 0;
+    const bets = row.bet_count || 0;
+    
     return `<div class="lb-row">
       <div class="lb-rank">${index + 1}</div>
       <div>
-        <div class="lb-addr">${row.user.slice(0, 10)}...${row.user.slice(-6)}</div>
-        <div class="lb-wins">${row.bet_count} winning bet${row.bet_count !== 1 ? 's' : ''}</div>
+        <div class="lb-addr">${(row.user || '').slice(0, 10)}...${(row.user || '').slice(-6)}</div>
+        <div class="lb-wins">${wins} wins · ${bets} bets</div>
       </div>
       <div>
         <div class="lb-amt">${parseFloat(amount).toLocaleString()}</div>
-        <div class="lb-aml">CLUTCH Won</div>
+        <div class="lb-aml">CLUTCH Wagered</div>
       </div>
     </div>`;
   }).join('');
