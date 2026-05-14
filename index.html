@@ -3644,17 +3644,61 @@ async function loadMatches() {
   
   allMatchesRaw = data.matches || [];
   
+  // 🔴 FETCH REAL POOLS FROM CONTRACT
+  if (wallet && !CFG.BETTING.includes('YourBetting')) {
+    try {
+      const betting = new ethers.Contract(CFG.BETTING, BETTING_ABI, wallet.provider);
+      
+      for (let match of allMatchesRaw) {
+        try {
+          const contractMatch = await betting.getMatch(match.id);
+          const totalPool = parseFloat(ethers.formatEther(contractMatch.totalPool));
+          
+          if (totalPool > 0) {
+            match.pools = {
+              home: parseFloat(ethers.formatEther(contractMatch.poolHome)).toFixed(2),
+              draw: parseFloat(ethers.formatEther(contractMatch.poolDraw)).toFixed(2),
+              away: parseFloat(ethers.formatEther(contractMatch.poolAway)).toFixed(2),
+              total: totalPool.toFixed(2)
+            };
+            
+            match.odds = {
+              home: Number(((parseFloat(match.pools.home) / totalPool) * 100).toFixed(2)),
+              draw: Number(((parseFloat(match.pools.draw) / totalPool) * 100).toFixed(2)),
+              away: Number(((parseFloat(match.pools.away) / totalPool) * 100).toFixed(2))
+            };
+          }
+        } catch (e) {
+          // Match might not exist in contract yet - keep showing 0
+          match.pools = { home: "0", draw: "0", away: "0", total: "0" };
+          match.odds = { home: 0, draw: 0, away: 0 };
+        }
+      }
+    } catch (err) {
+      console.warn('Contract not available, showing zero pools:', err.message);
+      allMatchesRaw.forEach(m => {
+        m.pools = { home: "0", draw: "0", away: "0", total: "0" };
+        m.odds = { home: 0, draw: 0, away: 0 };
+      });
+    }
+  } else {
+    // No wallet connected - show zeros
+    allMatchesRaw.forEach(m => {
+      m.pools = { home: "0", draw: "0", away: "0", total: "0" };
+      m.odds = { home: 0, draw: 0, away: 0 };
+    });
+  }
+  
   // Build groups from matches
   groupsMap.clear();
   allMatchesRaw.forEach(match => {
     let group = match.group || match.round || 'Group Stage';
     
     if (match.group) group = `Group ${match.group}`;
-    if (match.round === 'Round of 32' || match.round === 'Round of 16' || 
-        match.round === 'Quarter Final' || match.round === 'Semi Final') {
+    if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
       group = 'Knockout';
     }
-    if (match.round === 'Final' || match.round === 'Third Place') {
+    if (['Final', 'Third Place'].includes(match.round)) {
       group = 'Final';
     }
     
@@ -3818,7 +3862,7 @@ function renderMatchCard(m) {
   const isOpen = m.bettingOpen !== false && m.status === 'SCHEDULED';
   const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
   
-  let statusClass = 'sc2'; // Closed default
+  let statusClass = 'sc2';
   let statusText = 'Closed';
   
   if (isSettled) {
@@ -3832,7 +3876,9 @@ function renderMatchCard(m) {
     statusText = 'Open';
   }
   
-  const odds = m.odds || { home: 33.33, draw: 33.33, away: 33.33 };
+  // Real odds from contract (or zeros if no bets yet)
+  const odds = m.odds || { home: 0, draw: 0, away: 0 };
+  const hasOdds = odds.home > 0 || odds.draw > 0 || odds.away > 0;
   
   // Score display
   let scoreDisplay = 'VS';
@@ -3841,6 +3887,43 @@ function renderMatchCard(m) {
   }
   
   const scoreClass = (isSettled || isLive) ? 'sctxt' : 'vstxt';
+  
+  // Real pool from contract
+  const totalPool = m.pools?.total || "0";
+  const poolValue = parseFloat(totalPool);
+  
+  // Odds bar display
+  let oddsHTML = '';
+  if (hasOdds) {
+    oddsHTML = `
+    <div class="odds-w">
+      <div class="odds-lbl">
+        <span>${m.homeTeam}</span>
+        <span>Draw</span>
+        <span>${m.awayTeam}</span>
+      </div>
+      <div class="odds-bar">
+        <div class="os h" style="flex:${odds.home}">${odds.home >= 14 ? odds.home.toFixed(0) + '%' : ''}</div>
+        <div class="os d" style="flex:${odds.draw}">${odds.draw >= 14 ? odds.draw.toFixed(0) + '%' : ''}</div>
+        <div class="os a" style="flex:${odds.away}">${odds.away >= 14 ? odds.away.toFixed(0) + '%' : ''}</div>
+      </div>
+    </div>`;
+  } else {
+    oddsHTML = `
+    <div class="odds-w">
+      <div class="odds-lbl">
+        <span>${m.homeTeam}</span>
+        <span>Draw</span>
+        <span>${m.awayTeam}</span>
+      </div>
+      <div class="odds-bar" style="opacity:0.3;">
+        <div class="os" style="flex:1;background:rgba(255,255,255,0.05);">—</div>
+        <div class="os" style="flex:1;background:rgba(255,255,255,0.05);">—</div>
+        <div class="os" style="flex:1;background:rgba(255,255,255,0.05);">—</div>
+      </div>
+      <div style="color:var(--gray);font-size:10px;text-align:center;margin-top:4px;">No bets placed yet</div>
+    </div>`;
+  }
   
   // Betting UI
   let betUI = '';
@@ -3861,22 +3944,24 @@ function renderMatchCard(m) {
         <button class="bgo" onclick="placeBet(${m.id})">BET</button>
       </div>
       <div class="pstrip">
-        <span class="ptag">Pool: <b>${parseFloat(m.pools?.total || 0).toFixed(0)} CLUTCH</b></span>
+        ${poolValue > 0 ? `<span class="ptag">Pool: <b>${poolValue.toFixed(0)} CLUTCH</b></span>` : ''}
         <span class="ptag">Closes: <b>${new Date((m.betDeadline || m.startTime - 300) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></span>
       </div>
     </div>`;
   } else if (isLive) {
     betUI = `
-    <div style="padding-top:12px;text-align:center">
+    <div style="padding-top:12px;text-align:center;">
       <span class="rp rw" style="animation: pulseDot 1.5s ease-in-out infinite;">🔴 LIVE</span>
-      <div style="color:var(--gray);font-size:12px;margin-top:8px;">Betting Closed</div>
+      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Pool: ${poolValue.toFixed(0)} CLUTCH</div>` : ''}
+      <div style="color:var(--gray);font-size:12px;margin-top:4px;">Betting Closed</div>
     </div>`;
   } else if (isSettled) {
     const resultClass = m.winner === 'HOME_WIN' ? 'rw' : m.winner === 'AWAY_WIN' ? 'rl' : 'rpe';
     betUI = `
-    <div style="padding-top:12px;text-align:center">
+    <div style="padding-top:12px;text-align:center;">
       <span class="rp ${resultClass}">${(m.winner || 'Finished').replace(/_/g, ' ')}</span>
-      <div style="color:var(--gray);font-size:12px;margin-top:8px;">Match Completed</div>
+      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Total Pool: ${poolValue.toFixed(0)} CLUTCH</div>` : ''}
+      <div style="color:var(--gray);font-size:12px;margin-top:4px;">Match Completed</div>
     </div>`;
   } else {
     betUI = `
@@ -3892,11 +3977,12 @@ function renderMatchCard(m) {
         <span class="mc-date">${dateStr}</span>
         <span class="stag ${statusClass}"><span class="sp"></span>${statusText}</span>
       </div>
+      ${m.round ? `<div style="color:var(--amber);font-size:11px;margin-bottom:4px;font-weight:700;">📋 ${m.round}</div>` : ''}
       ${m.stadium ? `<div style="color:var(--gray);font-size:11px;margin-bottom:8px;">🏟️ ${m.stadium}, ${m.city || ''}</div>` : ''}
       <div class="mteams">
         <div class="tblk">
           <div class="flag">
-            <img src="${homeFlag}" alt="${m.homeTeam}">
+            <img src="${homeFlag}" alt="${m.homeTeam}" onerror="this.src='https://flagcdn.com/w80/un.png'">
           </div>
           <div class="tnm">${m.homeTeam}</div>
         </div>
@@ -3905,23 +3991,12 @@ function renderMatchCard(m) {
         </div>
         <div class="tblk">
           <div class="flag">
-            <img src="${awayFlag}" alt="${m.awayTeam}">
+            <img src="${awayFlag}" alt="${m.awayTeam}" onerror="this.src='https://flagcdn.com/w80/un.png'">
           </div>
           <div class="tnm">${m.awayTeam}</div>
         </div>
       </div>
-      <div class="odds-w">
-        <div class="odds-lbl">
-          <span>${m.homeTeam}</span>
-          <span>Draw</span>
-          <span>${m.awayTeam}</span>
-        </div>
-        <div class="odds-bar">
-          <div class="os h" style="flex:${odds.home}">${odds.home >= 14 ? odds.home.toFixed(0) + '%' : ''}</div>
-          <div class="os d" style="flex:${odds.draw}">${odds.draw >= 14 ? odds.draw.toFixed(0) + '%' : ''}</div>
-          <div class="os a" style="flex:${odds.away}">${odds.away >= 14 ? odds.away.toFixed(0) + '%' : ''}</div>
-        </div>
-      </div>
+      ${oddsHTML}
       ${!isSettled ? `
       <button class="ai-btn" onclick="showAIAnalysis(${m.id})">
         <span class="ai-icon">🤖</span>
