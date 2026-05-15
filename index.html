@@ -2933,12 +2933,12 @@ footer::before {
 //  CONFIG - Update with your deployed addresses
 // ══════════════════════════════════════════════════════════════════
 const CFG = {
-  API: 'https://backend-wcup.vercel.app/api',
-  CHAIN_ID: 8453,  // Base Mainnet
+  API: 'https://your-backend.vercel.app/api',  // ← Your deployed backend URL
+  CHAIN_ID: 8453,        // Base Mainnet
   CHAIN_NAME: 'Base',
   RPC_URL: 'https://mainnet.base.org',
-  TOKEN: '0xYourTokenAddressHere',  // Your CLUTCH token address on Base
-  BETTING: '0xYourBettingAddressHere',  // Your betting contract on Base
+  TOKEN: '0xYourTokenAddressHere',    // ← Deployed CLUTCH token
+  BETTING: '0xYourBettingAddressHere', // ← Deployed Betting contract
   WC_PROJECT_ID: '1e376e78c0aa32bd807ec395c7f7217e',
   EXPLORER: 'https://basescan.org'
 };
@@ -2948,7 +2948,8 @@ const TOKEN_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
   "function allowance(address owner, address spender) external view returns (uint256)",
   "function balanceOf(address account) external view returns (uint256)",
-  "function decimals() external view returns (uint8)"
+  "function decimals() external view returns (uint8)",
+  "function symbol() external view returns (string)"
 ];
 
 const BETTING_ABI = [
@@ -3486,22 +3487,18 @@ async function initWeb3Modal() {
 
   return web3modal;
 }
-
 function openWcModal() {
   if (wallet) {
-    if (web3modal) { web3modal.open({ view: 'Account' }); return; }
     disconnectWallet();
     return;
   }
   initWeb3Modal().then(modal => {
-    if (modal) {
-      modal.open();
-    } else {
-      connectMetaMaskDirect();
-    }
+    if (modal) modal.open();
+  }).catch(() => {
+    // Fallback to direct MetaMask
+    connectMetaMaskDirect();
   });
 }
-
 function closeWcModal() {
   if (web3modal) web3modal.close();
   const m = document.getElementById('wcModal');
@@ -3521,30 +3518,50 @@ async function connectWallet(type) {
 
 async function connectMetaMaskDirect() {
   if (!window.ethereum) {
-    toast('MetaMask not installed!', 'er');
+    toast('No wallet found! Install MetaMask', 'er');
     window.open('https://metamask.io/download/', '_blank');
     return;
   }
   try {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-    if (parseInt(chainId, 16) !== 8453) {
+    
+    // Check if on correct network
+    if (parseInt(chainId, 16) !== CFG.CHAIN_ID) {
       try {
+        // Try switching first
         await window.ethereum.request({
           method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0x2105' }] // 8453 in hex
+          params: [{ chainId: '0x' + CFG.CHAIN_ID.toString(16) }]
         });
-      } catch (sw) {
-        if (sw.code !== 4902) toast('Please switch to Base Mainnet', 'er');
+      } catch (switchError) {
+        // If network doesn't exist, add it
+        if (switchError.code === 4902) {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x' + CFG.CHAIN_ID.toString(16),
+              chainName: CFG.CHAIN_NAME,
+              rpcUrls: [CFG.RPC_URL],
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+              blockExplorerUrls: [CFG.EXPLORER]
+            }]
+          });
+        } else {
+          toast('Please switch to ' + CFG.CHAIN_NAME, 'er');
+          return;
+        }
       }
     }
+    
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
     const address = await signer.getAddress();
     wallet = { provider, signer, address, type: 'metamask' };
     updateWalletUI(address);
-    toast('MetaMask connected! ✅', 'ok');
+    toast('Wallet connected! ✅', 'ok');
     loadBalance();
+    loadMatches();
     loadMyBets();
   } catch (e) {
     toast(e.message?.slice(0, 80) || 'Failed to connect', 'er');
@@ -3574,16 +3591,38 @@ function updateWalletUI(address) {
 }
 
 async function loadBalance() {
-  if (!wallet || CFG.TOKEN.includes('YourToken')) return;
+  if (!wallet) return;
+  if (CFG.TOKEN.includes('YourToken')) return;
   
   try {
-    const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, wallet.provider);
+    const provider = wallet.provider;
+    const network = await provider.getNetwork();
+    console.log("Network:", Number(network.chainId));
+    
+    // Only proceed if on correct network
+    if (Number(network.chainId) !== CFG.CHAIN_ID) {
+      console.log("Wrong network. Expected:", CFG.CHAIN_ID, "Got:", Number(network.chainId));
+      return;
+    }
+    
+    const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, provider);
+    
+    // Try symbol first to verify contract
+    try {
+      const symbol = await token.symbol();
+      console.log("Token symbol:", symbol);
+    } catch(e) {
+      console.warn("Cannot read token symbol - wrong address or network");
+      return;
+    }
+    
     const balance = await token.balanceOf(wallet.address);
     const formatted = parseFloat(ethers.formatEther(balance)).toLocaleString(undefined, { maximumFractionDigits: 0 });
     $('balamt').textContent = formatted;
     $('fbpool-hero').textContent = formatted;
+    console.log("Balance:", formatted);
   } catch (error) {
-    console.error('Balance load error:', error);
+    console.warn('Balance load skipped:', error.message?.slice(0, 60));
   }
 }
 
@@ -3635,81 +3674,88 @@ function countUp(id, target) {
 // ══════════════════════════════════════════════════════════════════
 // REPLACE the existing loadMatches() function:
 
-async function loadMatches() {
-  const data = await api('/matches');
-  if (!data || !data.matches) {
-    $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
-    return;
-  }
-  
-  allMatchesRaw = data.matches || [];
-  
-  // 🔴 FETCH REAL POOLS FROM CONTRACT
+  async function loadMatches() {
+    const data = await api('/matches');
+    if (!data || !data.matches) {
+      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
+      return;
+    }
+    
+    allMatchesRaw = data.matches || [];
+    
+    // 🔴 FETCH REAL POOLS FROM CONTRACT
+      // 🔴 FETCH REAL POOLS FROM CONTRACT
   if (wallet && !CFG.BETTING.includes('YourBetting')) {
     try {
-      const betting = new ethers.Contract(CFG.BETTING, BETTING_ABI, wallet.provider);
+      const betting = new ethers.Contract(CFG.BETTING, [
+        "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
+      ], wallet.provider);
       
       for (let match of allMatchesRaw) {
         try {
-          const contractMatch = await betting.getMatch(match.id);
-          const totalPool = parseFloat(ethers.formatEther(contractMatch.totalPool));
+          const cm = await betting.getMatch(match.id);
+          // Tuple: [0]homeTeam, [1]awayTeam, [2]startTime, [3]betDeadline, [4]outcome, [5]settled, [6]poolHome, [7]poolDraw, [8]poolAway, [9]totalPool
+          const home = parseFloat(ethers.formatEther(cm[6]));
+          const draw = parseFloat(ethers.formatEther(cm[7]));
+          const away = parseFloat(ethers.formatEther(cm[8]));
+          const total = parseFloat(ethers.formatEther(cm[9]));
           
-          if (totalPool > 0) {
-            match.pools = {
-              home: parseFloat(ethers.formatEther(contractMatch.poolHome)).toFixed(2),
-              draw: parseFloat(ethers.formatEther(contractMatch.poolDraw)).toFixed(2),
-              away: parseFloat(ethers.formatEther(contractMatch.poolAway)).toFixed(2),
-              total: totalPool.toFixed(2)
-            };
-            
+          match.pools = {
+            home: home.toFixed(2),
+            draw: draw.toFixed(2),
+            away: away.toFixed(2),
+            total: total.toFixed(2)
+          };
+          
+          if (total > 0) {
             match.odds = {
-              home: Number(((parseFloat(match.pools.home) / totalPool) * 100).toFixed(2)),
-              draw: Number(((parseFloat(match.pools.draw) / totalPool) * 100).toFixed(2)),
-              away: Number(((parseFloat(match.pools.away) / totalPool) * 100).toFixed(2))
+              home: Number(((home / total) * 100).toFixed(2)),
+              draw: Number(((draw / total) * 100).toFixed(2)),
+              away: Number(((away / total) * 100).toFixed(2))
             };
+          } else {
+            match.odds = { home: 0, draw: 0, away: 0 };
           }
         } catch (e) {
-          // Match might not exist in contract yet - keep showing 0
           match.pools = { home: "0", draw: "0", away: "0", total: "0" };
           match.odds = { home: 0, draw: 0, away: 0 };
         }
       }
     } catch (err) {
-      console.warn('Contract not available, showing zero pools:', err.message);
+      console.warn('Contract not available:', err.message);
       allMatchesRaw.forEach(m => {
         m.pools = { home: "0", draw: "0", away: "0", total: "0" };
         m.odds = { home: 0, draw: 0, away: 0 };
       });
     }
   } else {
-    // No wallet connected - show zeros
     allMatchesRaw.forEach(m => {
       m.pools = { home: "0", draw: "0", away: "0", total: "0" };
       m.odds = { home: 0, draw: 0, away: 0 };
     });
   }
-  
-  // Build groups from matches
-  groupsMap.clear();
-  allMatchesRaw.forEach(match => {
-    let group = match.group || match.round || 'Group Stage';
     
-    if (match.group) group = `Group ${match.group}`;
-    if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
-      group = 'Knockout';
-    }
-    if (['Final', 'Third Place'].includes(match.round)) {
-      group = 'Final';
-    }
+    // Build groups from matches
+    groupsMap.clear();
+    allMatchesRaw.forEach(match => {
+      let group = match.group || match.round || 'Group Stage';
+      
+      if (match.group) group = `Group ${match.group}`;
+      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
+        group = 'Knockout';
+      }
+      if (['Final', 'Third Place'].includes(match.round)) {
+        group = 'Final';
+      }
+      
+      if (!groupsMap.has(group)) groupsMap.set(group, []);
+      groupsMap.get(group).push(match);
+    });
     
-    if (!groupsMap.has(group)) groupsMap.set(group, []);
-    groupsMap.get(group).push(match);
-  });
-  
-  renderGroupTabs();
-  applyGroupFilter();
-  $('mchip').textContent = allMatchesRaw.length + ' Matches';
-}
+    renderGroupTabs();
+    applyGroupFilter();
+    $('mchip').textContent = allMatchesRaw.length + ' Matches';
+  }
 // REPLACE the renderGroupTabs() function:
 
 function renderGroupTabs() {
