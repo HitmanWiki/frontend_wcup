@@ -3592,25 +3592,30 @@ function updateWalletUI(address) {
 
 async function loadBalance() {
   if (!wallet) return;
-  if (CFG.TOKEN.includes('YourToken')) return;
   
   try {
     const token = new ethers.Contract(
       CFG.TOKEN,
-      ["function balanceOf(address) view returns (uint256)", "function symbol() view returns (string)"],
+      ["function balanceOf(address) view returns (uint256)", "function symbol() view returns (string)", "function decimals() view returns (uint8)"],
       wallet.provider
     );
     
     const balance = await token.balanceOf(wallet.address);
     const symbol = await token.symbol();
-    const formatted = parseFloat(ethers.formatEther(balance)).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    const decimals = await token.decimals();
     
-    $('balamt').textContent = formatted;
-    $('fbpool-hero').textContent = formatted + ' ' + symbol;
+    // Use formatUnits with actual decimals (9) instead of formatEther (18)
+    const formatted = parseFloat(ethers.formatUnits(balance, decimals)).toLocaleString(undefined, { maximumFractionDigits: 2 });
     
-    console.log("Balance:", formatted, symbol);
+    document.getElementById('balamt').textContent = formatted;
+    document.getElementById('bchip').classList.add('show');
+    
+    const heroPool = document.getElementById('fbpool-hero');
+    if (heroPool) heroPool.textContent = formatted + ' ' + symbol;
+    
+    console.log('✅ Balance:', formatted, symbol);
   } catch (error) {
-    console.error('Balance load error:', error.message);
+    console.error('Balance error:', error.message);
   }
 }
 
@@ -3696,10 +3701,11 @@ function countUp(id, target) {
         try {
           const cm = await betting.getMatch(contractId);
           // Tuple: [0]homeTeam, [1]awayTeam, [2]startTime, [3]betDeadline, [4]outcome, [5]settled, [6]poolHome, [7]poolDraw, [8]poolAway, [9]totalPool
-          const home = parseFloat(ethers.formatEther(cm[6]));
-          const draw = parseFloat(ethers.formatEther(cm[7]));
-          const away = parseFloat(ethers.formatEther(cm[8]));
-          const total = parseFloat(ethers.formatEther(cm[9]));
+          const home = parseFloat(ethers.formatUnits(cm[6], 9));
+          const draw = parseFloat(ethers.formatUnits(cm[7], 9));
+          const away = parseFloat(ethers.formatUnits(cm[8], 9));
+          const total = parseFloat(ethers.formatUnits(cm[9], 9));
+
           
           match.pools = {
             home: home.toFixed(2),
