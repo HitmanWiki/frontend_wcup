@@ -2937,8 +2937,8 @@ const CFG = {
   CHAIN_ID: 8453,        // Base Mainnet
   CHAIN_NAME: 'Base',
   RPC_URL: 'https://mainnet.base.org',
-  TOKEN: '0xYourTokenAddressHere',    // ← Deployed CLUTCH token
-  BETTING: '0xYourBettingAddressHere', // ← Deployed Betting contract
+  TOKEN: '0x7f2D6f4ae65A4e6F52A0f0895c834a68EE2472C4',    // ← Deployed CLUTCH token
+  BETTING: '0x447C7DCc564DA5A7F167E50619513137042b1367', // ← Deployed Betting contract
   WC_PROJECT_ID: '1e376e78c0aa32bd807ec395c7f7217e',
   EXPLORER: 'https://basescan.org'
 };
@@ -3675,25 +3675,38 @@ function countUp(id, target) {
 // REPLACE the existing loadMatches() function:
 
   async function loadMatches() {
-    const data = await api('/matches');
-    if (!data || !data.matches) {
-      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
-      return;
-    }
-    
-    allMatchesRaw = data.matches || [];
-    
-    // 🔴 FETCH REAL POOLS FROM CONTRACT
-      // 🔴 FETCH REAL POOLS FROM CONTRACT
+  const data = await api('/matches');
+  if (!data || !data.matches) {
+    $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
+    return;
+  }
+  
+  allMatchesRaw = data.matches || [];
+  
+  // 🔴 FETCH REAL POOLS FROM CONTRACT
   if (wallet && !CFG.BETTING.includes('YourBetting')) {
     try {
       const betting = new ethers.Contract(CFG.BETTING, [
+        "function matchCount() view returns (uint256)",
         "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
       ], wallet.provider);
       
+      // Get how many matches exist on-chain
+      const onChainCount = Number(await betting.matchCount());
+      
       for (let match of allMatchesRaw) {
+        // Map backend ID (1-102) to contract ID (0-101)
+        const contractId = match.id - 1;
+        
+        // Skip if match doesn't exist on-chain
+        if (contractId >= onChainCount) {
+          match.pools = { home: "0", draw: "0", away: "0", total: "0" };
+          match.odds = { home: 0, draw: 0, away: 0 };
+          continue;
+        }
+        
         try {
-          const cm = await betting.getMatch(match.id);
+          const cm = await betting.getMatch(contractId);
           // Tuple: [0]homeTeam, [1]awayTeam, [2]startTime, [3]betDeadline, [4]outcome, [5]settled, [6]poolHome, [7]poolDraw, [8]poolAway, [9]totalPool
           const home = parseFloat(ethers.formatEther(cm[6]));
           const draw = parseFloat(ethers.formatEther(cm[7]));
@@ -3734,28 +3747,28 @@ function countUp(id, target) {
       m.odds = { home: 0, draw: 0, away: 0 };
     });
   }
+  
+  // Build groups from matches
+  groupsMap.clear();
+  allMatchesRaw.forEach(match => {
+    let group = match.group || match.round || 'Group Stage';
     
-    // Build groups from matches
-    groupsMap.clear();
-    allMatchesRaw.forEach(match => {
-      let group = match.group || match.round || 'Group Stage';
-      
-      if (match.group) group = `Group ${match.group}`;
-      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
-        group = 'Knockout';
-      }
-      if (['Final', 'Third Place'].includes(match.round)) {
-        group = 'Final';
-      }
-      
-      if (!groupsMap.has(group)) groupsMap.set(group, []);
-      groupsMap.get(group).push(match);
-    });
+    if (match.group) group = `Group ${match.group}`;
+    if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
+      group = 'Knockout';
+    }
+    if (['Final', 'Third Place'].includes(match.round)) {
+      group = 'Final';
+    }
     
-    renderGroupTabs();
-    applyGroupFilter();
-    $('mchip').textContent = allMatchesRaw.length + ' Matches';
-  }
+    if (!groupsMap.has(group)) groupsMap.set(group, []);
+    groupsMap.get(group).push(match);
+  });
+  
+  renderGroupTabs();
+  applyGroupFilter();
+  $('mchip').textContent = allMatchesRaw.length + ' Matches';
+}
 // REPLACE the renderGroupTabs() function:
 
 function renderGroupTabs() {
@@ -4083,7 +4096,9 @@ async function placeBet(matchId) {
     }
     
     toast('Placing bet on-chain...');
-    const tx = await betting.placeBet(matchId, OUTCOME[selectedChoice[matchId]], amount);
+    // 🔴 Map backend ID (1-102) to contract ID (0-101)
+    const contractId = matchId - 1;
+    const tx = await betting.placeBet(contractId, OUTCOME[selectedChoice[matchId]], amount);
     await tx.wait();
     
     // ─── RECORD BET IN BACKEND ────────────────────────────────
@@ -4092,7 +4107,7 @@ async function placeBet(matchId) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          matchId: matchId,
+          matchId: matchId,           // Store backend ID in DB
           userAddress: wallet.address,
           prediction: selectedChoice[matchId],
           amount: amountInput,
@@ -4112,7 +4127,6 @@ async function placeBet(matchId) {
     toast(error.reason || error.message || 'Transaction failed', 'er');
   }
 }
-
 // ══════════════════════════════════════════════════════════════════
 //  ULTIMATE BET FUNCTIONS
 // ══════════════════════════════════════════════════════════════════
@@ -4306,8 +4320,9 @@ async function claimWinnings(matchId, betIndex) {
   
   try {
     const betting = new ethers.Contract(CFG.BETTING, BETTING_ABI, wallet.signer);
+    const contractId = matchId - 1;  // ← ADD THIS
     toast('Claiming winnings...');
-    const tx = await betting.claimWinnings(matchId, betIndex);
+    const tx = await betting.claimWinnings(contractId, betIndex);
     await tx.wait();
     toast('Winnings claimed! 💰', 'ok');
     loadMyBets();
