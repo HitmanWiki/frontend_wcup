@@ -3595,34 +3595,22 @@ async function loadBalance() {
   if (CFG.TOKEN.includes('YourToken')) return;
   
   try {
-    const provider = wallet.provider;
-    const network = await provider.getNetwork();
-    console.log("Network:", Number(network.chainId));
-    
-    // Only proceed if on correct network
-    if (Number(network.chainId) !== CFG.CHAIN_ID) {
-      console.log("Wrong network. Expected:", CFG.CHAIN_ID, "Got:", Number(network.chainId));
-      return;
-    }
-    
-    const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, provider);
-    
-    // Try symbol first to verify contract
-    try {
-      const symbol = await token.symbol();
-      console.log("Token symbol:", symbol);
-    } catch(e) {
-      console.warn("Cannot read token symbol - wrong address or network");
-      return;
-    }
+    const token = new ethers.Contract(
+      CFG.TOKEN,
+      ["function balanceOf(address) view returns (uint256)", "function symbol() view returns (string)"],
+      wallet.provider
+    );
     
     const balance = await token.balanceOf(wallet.address);
+    const symbol = await token.symbol();
     const formatted = parseFloat(ethers.formatEther(balance)).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    
     $('balamt').textContent = formatted;
-    $('fbpool-hero').textContent = formatted;
-    console.log("Balance:", formatted);
+    $('fbpool-hero').textContent = formatted + ' ' + symbol;
+    
+    console.log("Balance:", formatted, symbol);
   } catch (error) {
-    console.warn('Balance load skipped:', error.message?.slice(0, 60));
+    console.error('Balance load error:', error.message);
   }
 }
 
