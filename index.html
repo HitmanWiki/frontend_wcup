@@ -4076,7 +4076,8 @@ async function placeBet(matchId) {
   if (!amountInput || +amountInput <= 0) return toast('Enter a valid amount', 'er');
   if (CFG.TOKEN.includes('YourToken')) return toast('Update contract addresses in CFG', 'er');
   
-  const amount = ethers.parseEther(amountInput);
+  // ✅ 9 decimals for your CLUTCH token
+  const amount = ethers.parseUnits(amountInput, 9);
   
   try {
     const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, wallet.signer);
@@ -4090,7 +4091,6 @@ async function placeBet(matchId) {
     }
     
     toast('Placing bet on-chain...');
-    // 🔴 Map backend ID (1-102) to contract ID (0-101)
     const contractId = matchId - 1;
     const tx = await betting.placeBet(contractId, OUTCOME[selectedChoice[matchId]], amount);
     await tx.wait();
@@ -4101,7 +4101,7 @@ async function placeBet(matchId) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          matchId: matchId,           // Store backend ID in DB
+          matchId: matchId,
           userAddress: wallet.address,
           prediction: selectedChoice[matchId],
           amount: amountInput,
@@ -4187,7 +4187,7 @@ async function placeUltimateBet() {
   if (!amountInput || +amountInput <= 0) return toast('Enter amount', 'er');
   if (CFG.TOKEN.includes('YourToken')) return toast('Update contract addresses', 'er');
   
-  const amount = ethers.parseEther(amountInput);
+  const amount = ethers.parseEther(amountInput, 9);
   
   try {
     const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, wallet.signer);
