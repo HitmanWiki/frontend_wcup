@@ -2020,6 +2020,257 @@ table.btbl {
   }
 }
 
+/* ═══════════════════════════════════════════════════════
+   HIGHLIGHTS DASHBOARD
+   ═══════════════════════════════════════════════════════ */
+.highlights-section {
+  margin-bottom: 32px;
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.highlight-card {
+  background: linear-gradient(145deg, rgba(21,53,160,.3), rgba(7,17,43,.5));
+  border: 1px solid var(--bord);
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+}
+
+.highlight-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(246,168,28,0.5);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(246,168,28,0.15);
+}
+
+.highlight-card.trending {
+  border-left: 3px solid var(--red);
+}
+
+.highlight-card.next-match {
+  border-left: 3px solid var(--blue);
+}
+
+.highlight-card.live-now {
+  border-left: 3px solid var(--green);
+  animation: liveGlow 2s ease-in-out infinite;
+}
+
+@keyframes liveGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(24,232,107,0.2); }
+  50% { box-shadow: 0 0 20px 0 rgba(24,232,107,0.1); }
+}
+
+.highlight-card.most-active {
+  border-left: 3px solid var(--amber);
+}
+
+.highlight-card.best-odds {
+  border-left: 3px solid #a78bfa;
+}
+
+.highlight-card.underdog {
+  border-left: 3px solid #f97316;
+}
+
+.hl-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+
+.hl-badge.trending {
+  background: rgba(198,39,54,0.2);
+  color: var(--red);
+}
+
+.hl-badge.next {
+  background: rgba(30,79,216,0.2);
+  color: var(--blue);
+}
+
+.hl-badge.live {
+  background: rgba(24,232,107,0.2);
+  color: var(--green);
+}
+
+.hl-badge.active {
+  background: rgba(246,168,28,0.2);
+  color: var(--amber);
+}
+
+.hl-badge.odds {
+  background: rgba(139,92,246,0.2);
+  color: #a78bfa;
+}
+
+.hl-badge.dog {
+  background: rgba(249,115,22,0.2);
+  color: #f97316;
+}
+
+.hl-teams {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.hl-flag {
+  width: 40px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(246,168,28,0.3);
+}
+
+.hl-vs {
+  font-family: 'Anton', sans-serif;
+  font-size: 14px;
+  color: var(--gray);
+}
+
+.hl-team-name {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  line-height: 1.2;
+}
+
+.hl-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hl-stat {
+  font-family: 'Anton', sans-serif;
+  font-size: 22px;
+  color: var(--amber);
+  text-shadow: 0 0 10px rgba(246,168,28,0.3);
+}
+
+.hl-label {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 10px;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.hl-countdown {
+  font-family: 'Anton', sans-serif;
+  font-size: 18px;
+  color: var(--blue);
+}
+
+.hl-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.hl-bet-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  background: linear-gradient(135deg, var(--amber), var(--amber3));
+  border: none;
+  color: var(--bg);
+  font-family: 'Anton', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.hl-bet-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(246,168,28,0.4);
+}
+
+/* Pool Mini Bar */
+.hl-pool-bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 1px;
+  margin-top: 8px;
+}
+
+.hl-pool-segment {
+  transition: flex 0.5s ease;
+}
+
+.hl-pool-segment.home { background: var(--blue); }
+.hl-pool-segment.draw { background: var(--gray); }
+.hl-pool-segment.away { background: var(--amber); }
+
+/* Filter Chips */
+.highlights-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.hl-filter-chip {
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--div);
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hl-filter-chip:hover, .hl-filter-chip.active {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(246,168,28,0.1);
+}
+
+/* Mobile */
+@media (max-width: 960px) {
+  .highlights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════
    DESIGN UPGRADE — Deeper Hero Visual System
    ══════════════════════════════════════════════════════════════ */
@@ -2854,7 +3105,30 @@ footer::before {
   <div class="sec-t">Live <em>Matches</em></div>
   <div class="chip ca" id="mchip">Loading…</div>
 </div>
-
+<!-- HIGHLIGHTS DASHBOARD -->
+<div class="highlights-section" id="highlightsSection">
+  <div class="sec-head" style="margin-bottom:16px;">
+    <div class="sec-t" style="font-size:28px;">📊 <em>Highlights</em></div>
+    <div class="chip ca" style="background:rgba(24,232,107,0.08);color:var(--green);">Live Data</div>
+  </div>
+  
+  <!-- Quick Filters -->
+  <div class="highlights-filters">
+    <button class="hl-filter-chip active" onclick="filterHighlights('all', this)">🔥 All Highlights</button>
+    <button class="hl-filter-chip" onclick="filterHighlights('trending', this)">💎 Trending</button>
+    <button class="hl-filter-chip" onclick="filterHighlights('next', this)">⏰ Upcoming</button>
+    <button class="hl-filter-chip" onclick="filterHighlights('live', this)">⚡ Live</button>
+    <button class="hl-filter-chip" onclick="filterHighlights('active', this)">👥 Most Active</button>
+  </div>
+  
+  <!-- Highlight Cards Grid -->
+  <div class="highlights-grid" id="highlightsGrid">
+    <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray);">
+      <span style="font-size:40px;">📊</span>
+      <p>Loading highlights...</p>
+    </div>
+  </div>
+</div>
 <!-- GROUP TABS - NEW -->
 <div class="group-tabs-wrapper" id="groupTabsContainer"></div>
 
@@ -3300,6 +3574,263 @@ const BETTING_ABI = [
 // Outcome mapping
 const OUTCOME = { HOME_WIN: 1, DRAW: 2, AWAY_WIN: 3 };
 
+
+// ═══════════════════════════════════════════════════════
+//  HIGHLIGHTS DASHBOARD
+// ═══════════════════════════════════════════════════════
+
+let highlightMatches = [];
+let currentHighlightFilter = 'all';
+
+async function loadHighlights() {
+  if (allMatchesRaw.length === 0) {
+    setTimeout(loadHighlights, 2000);
+    return;
+  }
+  
+  // Get matches with pool data
+  highlightMatches = allMatchesRaw.filter(m => m.pools && m.pools.total);
+  
+  renderHighlights();
+}
+
+function renderHighlights(filter = 'all') {
+  const grid = document.getElementById('highlightsGrid');
+  if (!grid) return;
+  
+  let cards = [];
+  
+  // 🔥 TRENDING - Highest total pool
+  if (filter === 'all' || filter === 'trending') {
+    const trending = [...highlightMatches]
+      .filter(m => m.status === 'SCHEDULED' && parseFloat(m.pools.total) > 0)
+      .sort((a, b) => parseFloat(b.pools.total) - parseFloat(a.pools.total))[0];
+    
+    if (trending) {
+      cards.push({
+        type: 'trending',
+        badge: '🔥 Trending',
+        badgeClass: 'trending',
+        match: trending,
+        icon: '🔥',
+        stat: `${parseFloat(trending.pools.total).toFixed(0)} CLUTCH`,
+        label: 'Total Pool',
+        color: 'var(--red)'
+      });
+    }
+  }
+  
+  // ⏰ NEXT MATCH - Closest upcoming
+  if (filter === 'all' || filter === 'next') {
+    const now = Math.floor(Date.now() / 1000);
+    const nextMatch = allMatchesRaw
+      .filter(m => m.status === 'SCHEDULED' && m.startTime > now)
+      .sort((a, b) => a.startTime - b.startTime)[0];
+    
+    if (nextMatch) {
+      cards.push({
+        type: 'next-match',
+        badge: '⏰ Next Match',
+        badgeClass: 'next',
+        match: nextMatch,
+        icon: '⏰',
+        countdown: nextMatch.startTime,
+        label: 'Kickoff',
+        color: 'var(--blue)'
+      });
+    }
+  }
+  
+  // ⚡ LIVE NOW - Matches in play
+  if (filter === 'all' || filter === 'live') {
+    const liveMatches = allMatchesRaw.filter(m => 
+      m.status === 'IN_PLAY' || m.status === 'PAUSED'
+    );
+    
+    if (liveMatches.length > 0) {
+      const live = liveMatches[0];
+      cards.push({
+        type: 'live-now',
+        badge: '⚡ LIVE NOW',
+        badgeClass: 'live',
+        match: live,
+        icon: '⚡',
+        stat: `${live.homeScore || 0} - ${live.awayScore || 0}`,
+        label: 'Live Score',
+        color: 'var(--green)'
+      });
+    }
+  }
+  
+  // 👥 MOST ACTIVE - Most unique bettors (estimated by pool balance)
+  if (filter === 'all' || filter === 'active') {
+    const active = [...highlightMatches]
+      .filter(m => parseFloat(m.pools.total) > 0)
+      .sort((a, b) => {
+        // Most balanced = most active
+        const aBalance = Math.abs(parseFloat(a.pools.home) - parseFloat(a.pools.away));
+        const bBalance = Math.abs(parseFloat(b.pools.home) - parseFloat(b.pools.away));
+        return aBalance - bBalance;
+      })[0];
+    
+    if (active) {
+      cards.push({
+        type: 'most-active',
+        badge: '👥 Most Active',
+        badgeClass: 'active',
+        match: active,
+        icon: '👥',
+        stat: getOddsText(active),
+        label: 'Closest Match',
+        color: 'var(--amber)'
+      });
+    }
+  }
+  
+  if (cards.length === 0) {
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray);">
+      <span style="font-size:40px;">📊</span>
+      <p>No highlights yet. Start betting!</p>
+    </div>`;
+    return;
+  }
+  
+  grid.innerHTML = cards.map(card => renderHighlightCard(card)).join('');
+  
+  // Start countdown timer for next match
+  const nextCard = cards.find(c => c.type === 'next-match');
+  if (nextCard) {
+    startCountdown(nextCard.match.startTime);
+  }
+}
+
+function renderHighlightCard(card) {
+  const m = card.match;
+  const homeFlag = getFlagUrl(m.homeTeam);
+  const awayFlag = getFlagUrl(m.awayTeam);
+  
+  let extraHTML = '';
+  
+  if (card.type === 'next-match') {
+    extraHTML = `
+      <div class="hl-countdown" id="countdown-${m.id}">
+        <span id="cd-d-${m.id}">--</span>d 
+        <span id="cd-h-${m.id}">--</span>h 
+        <span id="cd-m-${m.id}">--</span>m
+      </div>
+      <div class="hl-label">Until Kickoff</div>
+    `;
+  } else if (card.type === 'live-now') {
+    extraHTML = `
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="hl-live-dot"></span>
+        <span class="hl-stat">${card.stat}</span>
+      </div>
+      <div class="hl-label">${card.label}</div>
+    `;
+  } else {
+    extraHTML = `
+      <div class="hl-stat">${card.stat}</div>
+      <div class="hl-label">${card.label}</div>
+    `;
+  }
+  
+  return `
+    <div class="highlight-card ${card.type}" onclick="scrollToMatch(${m.id})">
+      <span class="hl-badge ${card.badgeClass}">${card.badge}</span>
+      
+      <div class="hl-teams">
+        <div style="text-align:center;">
+          <img src="${homeFlag}" class="hl-flag" alt="${m.homeTeam}" onerror="this.src='https://flagcdn.com/w80/un.png'">
+          <div class="hl-team-name">${m.homeTeam}</div>
+        </div>
+        <span class="hl-vs">VS</span>
+        <div style="text-align:center;">
+          <img src="${awayFlag}" class="hl-flag" alt="${m.awayTeam}" onerror="this.src='https://flagcdn.com/w80/un.png'">
+          <div class="hl-team-name">${m.awayTeam}</div>
+        </div>
+      </div>
+      
+      ${m.pools && parseFloat(m.pools.total) > 0 ? `
+        <div class="hl-pool-bar">
+          <div class="hl-pool-segment home" style="flex:${m.odds?.home || 1}"></div>
+          <div class="hl-pool-segment draw" style="flex:${m.odds?.draw || 1}"></div>
+          <div class="hl-pool-segment away" style="flex:${m.odds?.away || 1}"></div>
+        </div>
+      ` : ''}
+      
+      <div class="hl-info" style="margin-top:8px;">
+        ${extraHTML}
+        <button class="hl-bet-btn" onclick="event.stopPropagation();goToBet(${m.id})">Bet Now →</button>
+      </div>
+      
+      <div style="color:var(--gray);font-size:10px;margin-top:8px;">
+        ${m.stadium || ''} · ${m.city || ''} · ${new Date(m.startTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+      </div>
+    </div>
+  `;
+}
+
+function getOddsText(match) {
+  if (!match.odds) return 'No bets';
+  const h = match.odds.home || 0;
+  const d = match.odds.draw || 0;
+  const a = match.odds.away || 0;
+  return `${h}% / ${d}% / ${a}%`;
+}
+
+function scrollToMatch(matchId) {
+  const matchCard = document.querySelector(`[data-mid="${matchId}"]`)?.closest('.mc');
+  if (matchCard) {
+    matchCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    matchCard.style.boxShadow = '0 0 40px rgba(246,168,28,0.6)';
+    setTimeout(() => { matchCard.style.boxShadow = ''; }, 2000);
+  }
+}
+
+function goToBet(matchId) {
+  scrollToMatch(matchId);
+  // Also expand the betting UI if needed
+}
+
+function filterHighlights(filter, btn) {
+  document.querySelectorAll('.hl-filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentHighlightFilter = filter;
+  renderHighlights(filter);
+}
+
+function startCountdown(startTime) {
+  const update = () => {
+    const now = Math.floor(Date.now() / 1000);
+    const diff = startTime - now;
+    
+    if (diff <= 0) {
+      document.querySelectorAll('.hl-countdown').forEach(el => {
+        el.innerHTML = '<span style="color:var(--green);">STARTING!</span>';
+      });
+      return;
+    }
+    
+    const days = Math.floor(diff / 86400);
+    const hours = Math.floor((diff % 86400) / 3600);
+    const minutes = Math.floor((diff % 3600) / 60);
+    
+    document.querySelectorAll('[id^="cd-d-"]').forEach(el => el.textContent = days);
+    document.querySelectorAll('[id^="cd-h-"]').forEach(el => el.textContent = hours);
+    document.querySelectorAll('[id^="cd-m-"]').forEach(el => el.textContent = minutes);
+  };
+  
+  update();
+  clearInterval(window._highlightCountdown);
+  window._highlightCountdown = setInterval(update, 60000);
+}
+
+// Load highlights after matches load
+function initHighlights() {
+  loadHighlights();
+  setInterval(loadHighlights, 60000); // Refresh every minute
+}
 // ══════════════════════════════════════════════════════════════════
 //  FLAG IMAGES FROM CDN - World Cup 2026 Edition
 // ══════════════════════════════════════════════════════════════════
@@ -4120,6 +4651,9 @@ function countUp(id, target) {
     applyGroupFilter();
     $('mchip').textContent = allMatchesRaw.length + ' Matches';
     
+    // 🔴 LOAD HIGHLIGHTS DASHBOARD
+    setTimeout(initHighlights, 1000);
+    
   } finally {
     isLoadingMatches = false;
   }
@@ -4494,8 +5028,6 @@ async function placeBet(matchId) {
 // ══════════════════════════════════════════════════════════════════
 //  ULTIMATE BET FUNCTIONS
 // ══════════════════════════════════════════════════════════════════
-// REPLACE the existing renderUltimate() function:
-
 async function renderUltimate() {
   const data = await api('/ultimate');
   if (!data) return;
@@ -4503,12 +5035,26 @@ async function renderUltimate() {
   const teamPools = {};
   (data.teamPools || []).forEach(t => { teamPools[t.team] = t.amount; });
   
-  $('upool').textContent = parseFloat(data.totalPool || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  $('upool').textContent = parseFloat(data.totalPool || 0).toFixed(4) + ' ETH';
   
-  if (data.deadline) {
-    updateCountdown(data.deadline);
+  // Use the deadline from backend, or fallback to July 20, 2026
+  const deadline = data.deadline || 1784577000;
+  
+  // Only start countdown if deadline is in the future
+  if (deadline > Math.floor(Date.now() / 1000)) {
+    updateCountdown(deadline);
     clearInterval(window.countdownInterval);
-    window.countdownInterval = setInterval(() => updateCountdown(data.deadline), 30000);
+    window.countdownInterval = setInterval(() => updateCountdown(deadline), 60000);
+  } else {
+    // Already passed
+    $('ckd').textContent = '--';
+    $('ckh').textContent = '--';
+    $('ckm').textContent = '--';
+    
+    if (!data.settled) {
+      // Show that betting is closed but tournament not settled
+      document.querySelector('.uck').innerHTML = '⚠️ Betting closed · Awaiting final result';
+    }
   }
   
   if (data.settled && data.winner) {
@@ -4524,18 +5070,23 @@ async function renderUltimate() {
         <img src="${getFlagUrl(team)}" alt="${team}">
       </div>
       <div class="tn2">${team}</div>
-      <div class="tp2">${parseFloat(teamPools[team] || 0).toFixed(0)} CLUTCH</div>
+      <div class="tp2">${parseFloat(teamPools[team] || 0).toFixed(4)} ETH</div>
       <div class="tck">✓</div>
     </div>`
   ).join('');
 }
-
 function updateCountdown(deadline) {
-  const diff = deadline - Date.now() / 1000;
+  const now = Math.floor(Date.now() / 1000);
+  const diff = deadline - now;
+  
   if (diff <= 0) {
-    ['ckd', 'ckh', 'ckm'].forEach(id => $(id).textContent = '00');
+    ['ckd', 'ckh', 'ckm'].forEach(id => $(id).textContent = '--');
+    const uckEl = document.querySelector('.uck');
+    if (uckEl) uckEl.innerHTML = '⚠️ Betting closed · Awaiting final result';
+    clearInterval(window.countdownInterval);
     return;
   }
+  
   $('ckd').textContent = String(Math.floor(diff / 86400)).padStart(2, '0');
   $('ckh').textContent = String(Math.floor((diff % 86400) / 3600)).padStart(2, '0');
   $('ckm').textContent = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
