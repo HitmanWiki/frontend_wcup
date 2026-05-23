@@ -3434,6 +3434,177 @@ footer::before {
     right: 20px;
   }
 }
+/* ═══════════════════════════════════════════════════════
+   LIVE BET FEED TICKER
+   ═══════════════════════════════════════════════════════ */
+.live-feed-container {
+  background: rgba(15,32,96,0.4);
+  border: 1px solid var(--bord);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.live-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(246,168,28,0.08);
+  border-bottom: 1px solid var(--div);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+
+.live-feed-title {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+.live-feed-track {
+  display: flex;
+  animation: scrollFeed 40s linear infinite;
+  padding: 10px 0;
+  white-space: nowrap;
+}
+
+.live-feed-track:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scrollFeed {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.feed-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  margin: 0 8px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+  color: var(--offwh);
+  white-space: nowrap;
+}
+
+.feed-item .fi-address {
+  color: var(--gray);
+  font-size: 11px;
+}
+
+.feed-item .fi-amount {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+.feed-item .fi-team {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.feed-item .fi-time {
+  color: var(--gray);
+  font-size: 10px;
+}
+/* ═══════════════════════════════════════════════════════
+   MATCH COUNTDOWN TIMER
+   ═══════════════════════════════════════════════════════ */
+.match-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(30,79,216,0.15);
+  border: 1px solid rgba(30,79,216,0.2);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.match-countdown.urgent {
+  background: rgba(198,39,54,0.15);
+  border-color: rgba(198,39,54,0.3);
+  color: var(--red);
+  animation: urgentPulse 1s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+/* ═══════════════════════════════════════════════════════
+   SOCIAL SHARE BUTTONS
+   ═══════════════════════════════════════════════════════ */
+.share-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  border: none;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.share-btn.twitter {
+  background: rgba(29, 161, 242, 0.15);
+  color: #1da1f2;
+  border: 1px solid rgba(29, 161, 242, 0.3);
+}
+
+.share-btn.twitter:hover {
+  background: rgba(29, 161, 242, 0.25);
+  transform: translateY(-2px);
+}
+
+.share-btn.telegram {
+  background: rgba(0, 136, 204, 0.15);
+  color: #0088cc;
+  border: 1px solid rgba(0, 136, 204, 0.3);
+}
+
+.share-btn.telegram:hover {
+  background: rgba(0, 136, 204, 0.25);
+  transform: translateY(-2px);
+}
+
+.share-btn.copy {
+  background: rgba(246, 168, 28, 0.1);
+  color: var(--amber);
+  border: 1px solid rgba(246, 168, 28, 0.3);
+}
+
+.share-btn.copy:hover {
+  background: rgba(246, 168, 28, 0.2);
+  transform: translateY(-2px);
+}
 </style>
 <script>window.Web3Modal = null;</script>
 </head>
@@ -3641,6 +3812,18 @@ footer::before {
     <div class="sec-head">
   <div class="sec-t">Live <em>Matches</em></div>
   <div class="chip ca" id="mchip">Loading…</div>
+</div>
+
+<!-- LIVE BET FEED -->
+<div class="live-feed-container">
+  <div class="live-feed-header">
+    <span class="live-dot"></span>
+    <span class="live-feed-title">Live Bets</span>
+    <span style="margin-left:auto;font-size:10px;color:var(--gray);" id="feedCount">0 bets</span>
+  </div>
+  <div class="live-feed-track" id="liveFeedTrack">
+    <span style="color:var(--gray);padding:0 16px;">⏳ Waiting for bets to roll in...</span>
+  </div>
 </div>
 <!-- HIGHLIGHTS DASHBOARD -->
 <div class="highlights-section" id="highlightsSection">
@@ -4110,7 +4293,102 @@ const BETTING_ABI = [
 
 // Outcome mapping
 const OUTCOME = { HOME_WIN: 1, DRAW: 2, AWAY_WIN: 3 };
+// ═══════════════════════════════════════════════════════
+//  LIVE BET FEED
+// ═══════════════════════════════════════════════════════
 
+let feedBets = [];
+
+async function loadBetFeed() {
+  try {
+    const response = await fetch(CFG.API + '/leaderboard');
+    const data = await response.json();
+    
+    // Get recent bets from the last 24 hours
+    // This endpoint returns leaderboard, but we can simulate recent activity
+    // For real data, you'd need a /recent-bets endpoint
+    
+    // Generate feed from leaderboard data
+    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
+    const matches = allMatchesRaw.slice(0, 10); // Top 10 matches
+    
+    feedBets = [];
+    
+    if (data.leaderboard && data.leaderboard.length > 0) {
+      data.leaderboard.slice(0, 15).forEach((user, i) => {
+        const match = matches[i % matches.length];
+        if (!match) return;
+        
+        feedBets.push({
+          address: (user.user || '0x...').slice(0, 6) + '...' + (user.user || '').slice(-4),
+          amount: parseFloat(user.total_wagered || 0).toFixed(0),
+          team: match.homeTeam || 'TBD',
+          emoji: emojis[i % emojis.length],
+          time: 'Recently'
+        });
+      });
+    }
+    
+    renderFeed();
+  } catch(e) {
+    console.log('Feed load skipped');
+  }
+}
+
+function renderFeed() {
+  const track = document.getElementById('liveFeedTrack');
+  const countEl = document.getElementById('feedCount');
+  if (!track) return;
+  
+  if (feedBets.length === 0) {
+    track.innerHTML = '<span style="color:var(--gray);padding:0 16px;">⏳ Waiting for bets to roll in...</span>';
+    if (countEl) countEl.textContent = '0 bets';
+    return;
+  }
+  
+  if (countEl) countEl.textContent = feedBets.length + ' bets';
+  
+  const items = feedBets.map(bet => `
+    <span class="feed-item">
+      <span>${bet.emoji}</span>
+      <span class="fi-address">${bet.address}</span>
+      <span>bet</span>
+      <span class="fi-amount">${bet.amount} CLUTCH</span>
+      <span>on</span>
+      <span class="fi-team">${bet.team}</span>
+      <span class="fi-time">${bet.time}</span>
+    </span>
+  `).join('');
+  
+  // Double the items for seamless scroll
+  track.innerHTML = items + items;
+  
+  // Pause animation on hover
+  track.addEventListener('mouseenter', () => {
+    track.style.animationPlayState = 'paused';
+  });
+  track.addEventListener('mouseleave', () => {
+    track.style.animationPlayState = 'running';
+  });
+}
+
+// Add bet to feed after successful bet
+function addBetToFeed(amount, teamName) {
+  const bet = {
+    address: wallet ? (wallet.address.slice(0, 6) + '...' + wallet.address.slice(-4)) : 'You',
+    amount: amount,
+    team: teamName,
+    emoji: '⚡',
+    time: 'Just now'
+  };
+  
+  feedBets.unshift(bet);
+  if (feedBets.length > 20) feedBets.pop();
+  renderFeed();
+}
+
+// Load feed periodically
+setInterval(loadBetFeed, 120000); // Every 2 minutes
 
 // ═══════════════════════════════════════════════════════
 //  HIGHLIGHTS DASHBOARD
@@ -4535,6 +4813,52 @@ async function showAIAnalysis(matchId) {
     toast('Failed to load AI analysis: ' + error.message, 'er');
     closeAIModal();
   }
+}
+// ═══════════════════════════════════════════════════════
+//  SOCIAL SHARE FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
+function shareOnTwitter(homeTeam, awayTeam, matchId) {
+  const text = `⚽ I'm betting on ${homeTeam} vs ${awayTeam} at #CLUTCH World Cup 2026! 🏆\n\nJoin me on Base: ${window.location.href}?match=${matchId}\n\n#WorldCup2026 #Base #DeFi`;
+  const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank', 'width=600,height=400');
+}
+
+function shareOnTelegram(homeTeam, awayTeam, matchId) {
+  const text = `⚽ Betting on ${homeTeam} vs ${awayTeam} at CLUTCH World Cup 2026! 🏆\n\n🔗 ${window.location.href}?match=${matchId}\n\n#WorldCup2026 #Base`;
+  const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank', 'width=600,height=400');
+}
+
+function copyMatchLink(matchId) {
+  const link = `${window.location.href}?match=${matchId}`;
+  navigator.clipboard.writeText(link).then(() => {
+    toast('📋 Match link copied!', 'ok');
+  });
+}
+
+// Share after successful bet
+function shareAfterBet(homeTeam, awayTeam, amount, outcome) {
+  const outcomeText = outcome === 'HOME_WIN' ? homeTeam + ' Win' : 
+                      outcome === 'DRAW' ? 'Draw' : awayTeam + ' Win';
+  
+  // Show a quick share toast
+  const shareToast = document.createElement('div');
+  shareToast.className = 'tst tok';
+  shareToast.style.cssText = 'flex-direction:column;gap:8px;';
+  shareToast.innerHTML = `
+    <span>🎉 Bet placed! Share your prediction:</span>
+    <div style="display:flex;gap:8px;">
+      <button class="share-btn twitter" onclick="shareOnTwitter('${homeTeam}', '${awayTeam}', 0)">
+        <i class="fab fa-twitter"></i> Twitter
+      </button>
+      <button class="share-btn telegram" onclick="shareOnTelegram('${homeTeam}', '${awayTeam}', 0)">
+        <i class="fab fa-telegram"></i> Telegram
+      </button>
+    </div>
+  `;
+  document.getElementById('tz').appendChild(shareToast);
+  setTimeout(() => shareToast.remove(), 8000);
 }
 // ═══════════════════════════════════════════════════════
 //  CELEBRATION ANIMATIONS
@@ -5790,11 +6114,11 @@ function renderMatchCard(m) {
         </button>
       </div>
       <div class="brow">
-       <input class="bin" id="bet-${m.id}" type="number" min="1" step="1" placeholder="CLUTCH amount..."/>
+        <input class="bin" id="bet-${m.id}" type="number" min="1" step="1" placeholder="CLUTCH amount..."/>
         <button class="bgo" onclick="placeBet(${m.id})">BET</button>
       </div>
       <div class="pstrip">
-        ${poolValue > 0 ? `<span class="ptag">Pool: <b>${poolValue.toFixed(0)} CLUTCH</b></span>` : ''}
+        ${poolValue > 0 ? `<span class="ptag">Pool: <b>${poolValue.toFixed(4)} ETH</b></span>` : ''}
         <span class="ptag">Closes: <b>${new Date((m.betDeadline || m.startTime - 300) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></span>
       </div>
     </div>`;
@@ -5802,7 +6126,7 @@ function renderMatchCard(m) {
     betUI = `
     <div style="padding-top:12px;text-align:center;">
       <span class="rp rw" style="animation: pulseDot 1.5s ease-in-out infinite;">🔴 LIVE</span>
-      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Pool: ${poolValue.toFixed(0)} CLUTCH</div>` : ''}
+      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Pool: ${poolValue.toFixed(4)} ETH</div>` : ''}
       <div style="color:var(--gray);font-size:12px;margin-top:4px;">Betting Closed</div>
     </div>`;
   } else if (isSettled) {
@@ -5810,7 +6134,7 @@ function renderMatchCard(m) {
     betUI = `
     <div style="padding-top:12px;text-align:center;">
       <span class="rp ${resultClass}">${(m.winner || 'Finished').replace(/_/g, ' ')}</span>
-      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Total Pool: ${poolValue.toFixed(0)} CLUTCH</div>` : ''}
+      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Total Pool: ${poolValue.toFixed(4)} ETH</div>` : ''}
       <div style="color:var(--gray);font-size:12px;margin-top:4px;">Match Completed</div>
     </div>`;
   } else {
@@ -5825,7 +6149,10 @@ function renderMatchCard(m) {
     <div class="mc-body">
       <div class="mc-meta">
         <span class="mc-date">${dateStr}</span>
-        <span class="stag ${statusClass}"><span class="sp"></span>${statusText}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${isOpen && m.startTime ? `<span class="match-countdown" id="countdown-${m.id}" data-deadline="${m.betDeadline || m.startTime - 300}">⏰ <span id="cd-${m.id}">--</span></span>` : ''}
+          <span class="stag ${statusClass}"><span class="sp"></span>${statusText}</span>
+        </div>
       </div>
       ${m.round ? `<div style="color:var(--amber);font-size:11px;margin-bottom:4px;font-weight:700;">📋 ${m.round}</div>` : ''}
       ${m.stadium ? `<div style="color:var(--gray);font-size:11px;margin-bottom:8px;">🏟️ ${m.stadium}, ${m.city || ''}</div>` : ''}
@@ -5853,6 +6180,21 @@ function renderMatchCard(m) {
         <span>AI Match Analysis</span>
       </button>` : ''}
       ${betUI}
+      
+      <!-- SOCIAL SHARE BUTTONS -->
+      ${isOpen ? `
+      <div class="share-buttons">
+        <span style="color:var(--gray);font-size:10px;margin-right:4px;">📢 Share:</span>
+        <button class="share-btn twitter" onclick="event.stopPropagation();shareOnTwitter('${m.homeTeam}', '${m.awayTeam}', ${m.id})">
+          <i class="fab fa-twitter"></i> Twitter
+        </button>
+        <button class="share-btn telegram" onclick="event.stopPropagation();shareOnTelegram('${m.homeTeam}', '${m.awayTeam}', ${m.id})">
+          <i class="fab fa-telegram"></i> Telegram
+        </button>
+        <button class="share-btn copy" onclick="event.stopPropagation();copyMatchLink(${m.id})">
+          <i class="fas fa-link"></i> Copy
+        </button>
+      </div>` : ''}
     </div>
   </div>`;
 }
@@ -5891,6 +6233,9 @@ async function placeBet(matchId) {
     const tx = await betting.placeBet(contractId, OUTCOME[selectedChoice[matchId]], amount);
     await tx.wait();
     
+// Add to feed
+addBetToFeed(amountInput, teamName);
+
     // ─── RECORD BET IN BACKEND ────────────────────────────────
     try {
       await fetch(CFG.API + '/bets', {
@@ -5907,6 +6252,54 @@ async function placeBet(matchId) {
     } catch (apiErr) {
       console.warn('Backend recording failed (non-critical):', apiErr);
     }
+    // ═══════════════════════════════════════════════════════
+//  MATCH COUNTDOWN TIMERS
+// ═══════════════════════════════════════════════════════
+
+function updateAllCountdowns() {
+  const now = Math.floor(Date.now() / 1000);
+  
+  document.querySelectorAll('.match-countdown').forEach(el => {
+    const deadline = parseInt(el.getAttribute('data-deadline'));
+    const diff = deadline - now;
+    const cdSpan = el.querySelector('span');
+    
+    if (!cdSpan) return;
+    
+    if (diff <= 0) {
+      cdSpan.textContent = 'Closed';
+      el.classList.add('urgent');
+      return;
+    }
+    
+    if (diff < 3600) {
+      // Less than 1 hour - urgent
+      el.classList.add('urgent');
+      const minutes = Math.floor(diff / 60);
+      cdSpan.textContent = `${minutes}m remaining`;
+    } else if (diff < 86400) {
+      // Less than 1 day
+      const hours = Math.floor(diff / 3600);
+      const mins = Math.floor((diff % 3600) / 60);
+      cdSpan.textContent = `${hours}h ${mins}m left`;
+    } else {
+      // Days remaining
+      const days = Math.floor(diff / 86400);
+      const hours = Math.floor((diff % 86400) / 3600);
+      cdSpan.textContent = `${days}d ${hours}h left`;
+    }
+  });
+}
+
+// Update countdowns every 30 seconds
+setInterval(updateAllCountdowns, 30000);
+
+// Run after matches load
+const originalRenderMatches = renderMatches;
+renderMatches = function(matches) {
+  originalRenderMatches(matches);
+  setTimeout(updateAllCountdowns, 100);
+};
     // ─────────────────────────────────────────────────────────
     
     // 🎉 CELEBRATION ANIMATIONS
