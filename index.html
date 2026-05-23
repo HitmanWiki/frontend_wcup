@@ -3000,13 +3000,13 @@ footer::before {
         <table style="width:100%; margin:16px 0;">
           <tr><th>Step</th><th>Calculation</th><th>Result</th></tr>
           <tr><td>Total Pool</td><td>500 + 300 + 200</td><td>1,000 CLUTCH</td></tr>
-          <tr><td>Platform Fee (3%)</td><td>1,000 × 3%</td><td>30 CLUTCH → Treasury</td></tr>
-          <tr><td>Prize Pool (97%)</td><td>1,000 - 30</td><td>970 CLUTCH</td></tr>
+         <tr><td>Platform Fee (0%)</td><td>1,000 × 0%</td><td>0 CLUTCH</td></tr>
+<tr><td>Prize Pool (100%)</td><td>1,000</td><td>1,000 CLUTCH</td></tr>
           <tr><td>Winning Pool</td><td>Brazil bets only</td><td>500 CLUTCH</td></tr>
         </table>
         <p><strong>If you bet 100 CLUTCH on Brazil:</strong><br>
         Your share = 100/500 = 20%<br>
-        Payout = 20% × 970 = <strong>194 CLUTCH</strong> (+94 profit!)</p>
+        Payout = 20% × 1000 = <strong>200 CLUTCH</strong> (+100 profit!)</p>
       </div>
 
       <div class="guide-note">
@@ -3023,7 +3023,7 @@ footer::before {
       <ul style="color:var(--offwh); line-height:2; margin:16px 0; padding-left:20px;">
         <li>One pool for all teams</li>
         <li>Bet anytime before the <strong>Final kicks off (July 26, 2026)</strong></li>
-        <li>If your team wins the tournament, you split 97% of the ultimate pool</li>
+        <li>If your team wins the tournament, you split 100% of the ultimate pool</li>
         <li>Multiple winners? Split proportionally by bet size</li>
       </ul>
     </div>
@@ -4724,7 +4724,7 @@ function initTicker() {
   const messages = [
     'CLUTCH WC 2026', '★', 'BET • WIN • REPEAT', '★',
     'BASE POWERED', '★', 'AUTO SETTLEMENT', '★',
-    'AI ANALYSIS', '★', '97% TO WINNERS', '★'
+    'AI ANALYSIS', '★', '100% to winners — zero fees!', '★'
   ];
   
   track.innerHTML = messages.map(m => `<span>${m}</span>`).join('') +
