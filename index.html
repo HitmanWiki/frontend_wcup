@@ -5996,18 +5996,7 @@ function applyGroupFilter() {
   }
 }
 
-function renderMatchesByGroup(matches) {
-  const grid = document.getElementById('mgrid');
-  if (!matches.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;padding:64px;text-align:center">
-      <div style="font-size:64px;margin-bottom:16px">🏆</div>
-      <div style="font-family:Anton,sans-serif;font-size:28px;color:var(--gray)">No matches in ${currentGroupFilter}</div>
-    </div>`;
-    return;
-  }
-  
-  grid.innerHTML = matches.map(match => renderMatchCard(match)).join('');
-}
+
 
 function renderMatchesByGroup(matches) {
   const grid = document.getElementById('mgrid');
@@ -6217,6 +6206,15 @@ async function placeBet(matchId) {
   // ✅ 9 decimals for your CLUTCH token
   const amount = ethers.parseUnits(amountInput, 9);
   
+  // Get match info BEFORE try block
+  const match = allMatchesRaw.find(m => m.id === matchId);
+  const teamName = selectedChoice[matchId] === 'HOME_WIN' ? match?.homeTeam : 
+                   selectedChoice[matchId] === 'DRAW' ? 'Draw' : 
+                   match?.awayTeam || 'Unknown';
+  const matchName = match ? `${match.homeTeam} vs ${match.awayTeam}` : 'Match';
+  const homeTeam = match?.homeTeam || 'Team A';
+  const awayTeam = match?.awayTeam || 'Team B';
+  
   try {
     const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, wallet.signer);
     const betting = new ethers.Contract(CFG.BETTING, BETTING_ABI, wallet.signer);
@@ -6233,9 +6231,6 @@ async function placeBet(matchId) {
     const tx = await betting.placeBet(contractId, OUTCOME[selectedChoice[matchId]], amount);
     await tx.wait();
     
-// Add to feed
-addBetToFeed(amountInput, teamName);
-
     // ─── RECORD BET IN BACKEND ────────────────────────────────
     try {
       await fetch(CFG.API + '/bets', {
@@ -6252,67 +6247,18 @@ addBetToFeed(amountInput, teamName);
     } catch (apiErr) {
       console.warn('Backend recording failed (non-critical):', apiErr);
     }
-    // ═══════════════════════════════════════════════════════
-//  MATCH COUNTDOWN TIMERS
-// ═══════════════════════════════════════════════════════
-
-function updateAllCountdowns() {
-  const now = Math.floor(Date.now() / 1000);
-  
-  document.querySelectorAll('.match-countdown').forEach(el => {
-    const deadline = parseInt(el.getAttribute('data-deadline'));
-    const diff = deadline - now;
-    const cdSpan = el.querySelector('span');
-    
-    if (!cdSpan) return;
-    
-    if (diff <= 0) {
-      cdSpan.textContent = 'Closed';
-      el.classList.add('urgent');
-      return;
-    }
-    
-    if (diff < 3600) {
-      // Less than 1 hour - urgent
-      el.classList.add('urgent');
-      const minutes = Math.floor(diff / 60);
-      cdSpan.textContent = `${minutes}m remaining`;
-    } else if (diff < 86400) {
-      // Less than 1 day
-      const hours = Math.floor(diff / 3600);
-      const mins = Math.floor((diff % 3600) / 60);
-      cdSpan.textContent = `${hours}h ${mins}m left`;
-    } else {
-      // Days remaining
-      const days = Math.floor(diff / 86400);
-      const hours = Math.floor((diff % 86400) / 3600);
-      cdSpan.textContent = `${days}d ${hours}h left`;
-    }
-  });
-}
-
-// Update countdowns every 30 seconds
-setInterval(updateAllCountdowns, 30000);
-
-// Run after matches load
-const originalRenderMatches = renderMatches;
-renderMatches = function(matches) {
-  originalRenderMatches(matches);
-  setTimeout(updateAllCountdowns, 100);
-};
     // ─────────────────────────────────────────────────────────
     
     // 🎉 CELEBRATION ANIMATIONS
-    const match = allMatchesRaw.find(m => m.id === matchId);
-    const teamName = selectedChoice[matchId] === 'HOME_WIN' ? match?.homeTeam : 
-                     selectedChoice[matchId] === 'DRAW' ? 'Draw' : 
-                     match?.awayTeam || 'Unknown';
-    const matchName = match ? `${match.homeTeam} vs ${match.awayTeam}` : 'Match';
-    
-    // Trigger all celebration effects
     celebrateBet(amountInput, teamName, matchName);
     
-    // Show success toast with extra flair
+    // 📢 SHARE PROMPT
+    shareAfterBet(homeTeam, awayTeam, amountInput, selectedChoice[matchId]);
+    
+    // 🔴 ADD TO LIVE FEED
+    addBetToFeed(amountInput, teamName);
+    
+    // Show success toast
     toast(`🎉 ${amountInput} CLUTCH bet on ${teamName}!`, 'ok');
     
     setTimeout(loadMatches, 3000);
@@ -6322,6 +6268,7 @@ renderMatches = function(matches) {
     toast(error.reason || error.message || 'Transaction failed', 'er');
   }
 }
+   
 // ══════════════════════════════════════════════════════════════════
 //  ULTIMATE BET FUNCTIONS
 // ══════════════════════════════════════════════════════════════════
@@ -6405,7 +6352,7 @@ async function placeUltimateBet() {
   if (!amountInput || +amountInput <= 0) return toast('Enter amount', 'er');
   if (CFG.TOKEN.includes('YourToken')) return toast('Update contract addresses', 'er');
   
-  const amount = ethers.parseEther(amountInput, 9);
+  const amount = ethers.parseUnits(amountInput, 9); // ✅ 9 decimals
   
   try {
     const token = new ethers.Contract(CFG.TOKEN, TOKEN_ABI, wallet.signer);
@@ -6447,6 +6394,44 @@ async function placeUltimateBet() {
     toast(error.reason || error.message || 'Failed', 'er');
   }
 }
+// ═══════════════════════════════════════════════════════
+//  MATCH COUNTDOWN TIMERS
+// ═══════════════════════════════════════════════════════
+
+function updateAllCountdowns() {
+  const now = Math.floor(Date.now() / 1000);
+  
+  document.querySelectorAll('.match-countdown').forEach(el => {
+    const deadline = parseInt(el.getAttribute('data-deadline'));
+    const diff = deadline - now;
+    const cdSpan = el.querySelector('span');
+    
+    if (!cdSpan) return;
+    
+    if (diff <= 0) {
+      cdSpan.textContent = 'Closed';
+      el.classList.add('urgent');
+      return;
+    }
+    
+    if (diff < 3600) {
+      el.classList.add('urgent');
+      cdSpan.textContent = `${Math.floor(diff / 60)}m`;
+    } else if (diff < 86400) {
+      cdSpan.textContent = `${Math.floor(diff / 3600)}h ${Math.floor((diff % 3600) / 60)}m`;
+    } else {
+      cdSpan.textContent = `${Math.floor(diff / 86400)}d ${Math.floor((diff % 86400) / 3600)}h`;
+    }
+  });
+}
+
+// Update countdowns every 30 seconds
+setInterval(updateAllCountdowns, 30000);
+
+// Run after page loads
+window.addEventListener('load', () => {
+  setTimeout(updateAllCountdowns, 3000);
+});
 
 // ══════════════════════════════════════════════════════════════════
 //  MY BETS & LEADERBOARD
