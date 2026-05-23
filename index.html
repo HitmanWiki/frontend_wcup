@@ -2638,7 +2638,7 @@ footer::before {
 
       <p class="hdesc">
         <span style="font-size: 24px; color: var(--amber); margin-right: 8px;">⚽</span>
-        The meme mascot betting platform on Ethereum. Stake CLUTCH, predict matches, 
+        The meme mascot betting platform on BASE. Stake CLUTCH, predict matches, 
         <span style="color: var(--amber); font-weight: 700;">collect automatically</span>. 
         Zero middlemen, 100% transparency.
       </p>
@@ -2820,7 +2820,72 @@ footer::before {
 <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
   <i class="fas fa-arrow-up"></i>
 </button>
+<!-- HOW TO PLAY SECTION -->
+<div id="how-it-works" style="max-width: 1200px; margin: 80px auto 0; padding: 40px; background: var(--card); border: 1px solid var(--bord); border-radius: 20px;">
+  <div class="sec-head">
+    <div class="sec-t">How to <em>Play</em></div>
+  </div>
+  
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px;">
+    <div style="text-align: center; padding: 24px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">1️⃣</div>
+      <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 8px;">Connect Wallet</h4>
+      <p style="color: var(--offwh); font-size: 14px;">Connect with MetaMask or WalletConnect on Base Mainnet. Get CLUTCH tokens to start betting.</p>
+    </div>
+    <div style="text-align: center; padding: 24px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">2️⃣</div>
+      <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 8px;">Place Your Prediction</h4>
+      <p style="color: var(--offwh); font-size: 14px;">Choose Home Win, Draw, or Away Win. Stake CLUTCH tokens. Odds update in real-time as more bets come in.</p>
+    </div>
+    <div style="text-align: center; padding: 24px;">
+      <div style="font-size: 48px; margin-bottom: 12px;">3️⃣</div>
+      <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 8px;">Win & Claim</h4>
+      <p style="color: var(--offwh); font-size: 14px;">After the match ends, winners claim their share of the pool. 97% goes to winners automatically!</p>
+    </div>
+  </div>
+  
+  <div style="margin-top: 32px; padding: 20px; background: rgba(246,168,28,0.05); border-radius: 12px; border: 1px solid var(--bord);">
+    <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 12px;">📊 How Payouts Work</h4>
+    <p style="color: var(--offwh); font-size: 14px; line-height: 1.8;">
+      CLUTCH uses <strong>parimutuel betting</strong> — all bets go into a shared pool. 
+      Winners split 97% of the pool proportionally to their bet size. 
+      The more you bet, the bigger your share. Simple and fair!
+    </p>
+  </div>
+</div>
+<!-- PRIVACY MODAL -->
+<div id="privacyModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:rgba(7,17,43,0.97); align-items:center; justify-content:center;" onclick="closePrivacyModal(event)">
+  <div style="background:var(--navy); border:1px solid var(--bord); border-radius:20px; padding:40px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h3 style="font-family:'Anton',sans-serif; color:var(--amber); font-size:24px;">🔒 Privacy Policy</h3>
+      <button onclick="document.getElementById('privacyModal').style.display='none'" style="background:none;border:none;color:var(--gray);font-size:28px;cursor:pointer;">×</button>
+    </div>
+    <p style="color:var(--offwh);line-height:1.8;">
+      <strong>No Personal Data Collected:</strong> CLUTCH is a decentralized application. We do not collect, store, or share any personal information. Your wallet address is the only identifier used, and all transactions are public on the Base blockchain.<br><br>
+      <strong>Newsletter:</strong> If you subscribe to our newsletter, we only store your email address for updates. You can unsubscribe anytime.<br><br>
+      <strong>Analytics:</strong> We may use anonymous analytics to improve the platform. No personal data is tracked.<br><br>
+      <strong>Contact:</strong> For privacy concerns, email us at privacy@clutchwc.com
+    </p>
+  </div>
+</div>
 
+<!-- RESPONSIBLE GAMING MODAL -->
+<div id="gamingModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:rgba(7,17,43,0.97); align-items:center; justify-content:center;" onclick="closeGamingModal(event)">
+  <div style="background:var(--navy); border:1px solid var(--bord); border-radius:20px; padding:40px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+      <h3 style="font-family:'Anton',sans-serif; color:var(--amber); font-size:24px;">❤️ Responsible Gaming</h3>
+      <button onclick="document.getElementById('gamingModal').style.display='none'" style="background:none;border:none;color:var(--gray);font-size:28px;cursor:pointer;">×</button>
+    </div>
+    <p style="color:var(--offwh);line-height:1.8;">
+      <strong>Bet Responsibly:</strong> CLUTCH is built for entertainment. Only bet what you can afford to lose. Cryptocurrency is volatile — never risk essential funds.<br><br>
+      <strong>Set Limits:</strong> Decide your budget before betting and stick to it. Don't chase losses.<br><br>
+      <strong>It's a Game:</strong> World Cup 2026 is a celebration of football. Enjoy the matches, have fun with predictions, and don't let betting affect your wellbeing.<br><br>
+      <strong>Need Help?</strong> If gambling is affecting your life, contact: 
+      <a href="https://www.gamblersanonymous.org" target="_blank" style="color:var(--amber);">Gamblers Anonymous</a> or 
+      <a href="https://www.ncpgambling.org" target="_blank" style="color:var(--amber);">National Council on Problem Gambling</a>
+    </p>
+  </div>
+</div>
 <!-- FOOTER -->
 <footer>
   <div class="footer-container">
@@ -2834,13 +2899,13 @@ footer::before {
       </div>
       <p>The ultimate meme mascot betting platform for World Cup 2026. Predict matches, stake CLUTCH tokens, and win automatically.</p>
       <div class="social-links">
-        <a href="https://twitter.com/" class="social-link" target="_blank">
+        <a href="https://x.com/clutchonbase?s=21" class="social-link" target="_blank">
           <i class="fab fa-twitter"></i>
         </a>
         <a href="https://discord.com/" class="social-link" target="_blank">
           <i class="fab fa-discord"></i>
         </a>
-        <a href="https://t.me/" class="social-link" target="_blank">
+        <a href="https://t.me/ClutchOnBase" class="social-link" target="_blank">
           <i class="fab fa-telegram"></i>
         </a>
         <a href="https://github.com/" class="social-link" target="_blank">
@@ -2854,27 +2919,27 @@ footer::before {
 
     <!-- Quick Links -->
     <div class="footer-section">
-      <h3>Quick Links</h3>
-      <ul class="footer-links">
-        <li><a href="#" onclick="goPage('matches');return false;"><i class="fas fa-futbol"></i> Live Matches</a></li>
-        <li><a href="#" onclick="goPage('ultimate');return false;"><i class="fas fa-trophy"></i> Ultimate Bet</a></li>
-        <li><a href="#" onclick="goPage('mybets');return false;"><i class="fas fa-receipt"></i> My Bets</a></li>
-        <li><a href="#" onclick="goPage('leaderboard');return false;"><i class="fas fa-chart-line"></i> Leaderboard</a></li>
-        <li><a href="#"><i class="fas fa-play-circle"></i> How to Play</a></li>
-      </ul>
-    </div>
+  <h3>Quick Links</h3>
+  <ul class="footer-links">
+    <li><a href="#" onclick="goPage('matches');return false;"><i class="fas fa-futbol"></i> Live Matches</a></li>
+    <li><a href="#" onclick="goPage('ultimate');return false;"><i class="fas fa-trophy"></i> Ultimate Bet</a></li>
+    <li><a href="#" onclick="goPage('mybets');return false;"><i class="fas fa-receipt"></i> My Bets</a></li>
+    <li><a href="#" onclick="goPage('leaderboard');return false;"><i class="fas fa-chart-line"></i> Leaderboard</a></li>
+    <li><a href="#" onclick="scrollToHowItWorks();return false;"><i class="fas fa-play-circle"></i> How to Play</a></li>
+  </ul>
+</div>
 
     <!-- Resources -->
     <div class="footer-section">
-      <h3>Resources</h3>
-      <ul class="footer-links">
-        <li><a href="#"><i class="fas fa-file-alt"></i> Whitepaper</a></li>
-        <li><a href="#"><i class="fas fa-link"></i> Smart Contract</a></li>
-        <li><a href="#"><i class="fas fa-robot"></i> AI Analytics</a></li>
-        <li><a href="#"><i class="fas fa-chart-simple"></i> Live Stats</a></li>
-        <li><a href="#"><i class="fas fa-question-circle"></i> FAQ</a></li>
-      </ul>
-    </div>
+  <h3>Resources</h3>
+  <ul class="footer-links">
+    <li><a href="https://basescan.org/address/0x7f2D6f4ae65A4e6F52A0f0895c834a68EE2472C4" target="_blank"><i class="fas fa-coins"></i> CLUTCH Token</a></li>
+    <li><a href="https://basescan.org/address/0x0d1800Fa682d94369660304d349851120d934Ab0" target="_blank"><i class="fas fa-file-contract"></i> Smart Contract</a></li>
+    <li><a href="#" onclick="openAIModal();return false;"><i class="fas fa-robot"></i> AI Analytics</a></li>
+    <li><a href="https://basescan.org/" target="_blank"><i class="fas fa-search"></i> Base Explorer</a></li>
+    <li><a href="https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026" target="_blank"><i class="fas fa-globe"></i> Official WC 2026</a></li>
+  </ul>
+</div>
 
     <!-- Newsletter -->
     <div class="footer-section">
@@ -2904,16 +2969,16 @@ footer::before {
   </div>
 
   <div class="footer-bottom">
-    <div class="copyright">
-      <i class="far fa-copyright"></i> 2026 CLUTCH World Cup Betting. All rights reserved. | World Cup 2026 · USA · Canada · Mexico
-    </div>
-    <div class="footer-bottom-links">
-      <a href="#"><i class="fas fa-gavel"></i> Terms</a>
-      <a href="#"><i class="fas fa-lock"></i> Privacy</a>
-      <a href="#"><i class="fas fa-heart"></i> Responsible Gaming</a>
-      <a href="#"><i class="fas fa-envelope"></i> Contact</a>
-    </div>
+  <div class="copyright">
+    <i class="far fa-copyright"></i> 2026 CLUTCH World Cup Betting. All rights reserved. | World Cup 2026 · USA · Canada · Mexico
   </div>
+  <div class="footer-bottom-links">
+  <a href="https://basescan.org/address/0x27BE935d3c8A9a0468A08466bb05d4b3b0eb3B9C" target="_blank"><i class="fas fa-gavel"></i> Verified Contract</a>
+  <a href="#" onclick="openPrivacyModal();return false;"><i class="fas fa-lock"></i> Privacy</a>
+  <a href="#" onclick="openGamingModal();return false;"><i class="fas fa-heart"></i> Responsible Gaming</a>
+  <a href="https://t.me/ClutchOnBase"><i class="fas fa-envelope"></i> Contact</a>
+</div>
+</div>
 </footer>
 <!-- TOAST NOTIFICATIONS -->
 <div class="tz" id="tz"></div>
@@ -2929,6 +2994,35 @@ footer::before {
 </script>
 
 <script>
+  // How to Play - scroll
+function scrollToHowItWorks() {
+  const section = document.getElementById('how-it-works');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+// Privacy Modal
+function openPrivacyModal() {
+  document.getElementById('privacyModal').style.display = 'flex';
+}
+
+function closePrivacyModal(event) {
+  if (event.target === document.getElementById('privacyModal')) {
+    document.getElementById('privacyModal').style.display = 'none';
+  }
+}
+
+// Responsible Gaming Modal
+function openGamingModal() {
+  document.getElementById('gamingModal').style.display = 'flex';
+}
+
+function closeGamingModal(event) {
+  if (event.target === document.getElementById('gamingModal')) {
+    document.getElementById('gamingModal').style.display = 'none';
+  }
+}
 // ══════════════════════════════════════════════════════════════════
 //  CONFIG - Update with your deployed addresses
 // ══════════════════════════════════════════════════════════════════
@@ -4461,6 +4555,7 @@ window.addEventListener('beforeunload', () => {
     walletConnectProvider.disconnect();
   }
 });
+
 </script>
 </body>
 </html>
