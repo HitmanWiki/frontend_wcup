@@ -768,6 +768,7 @@ nav {
   grid-template-columns: repeat(4, 1fr);
   border-bottom: 1px solid var(--div);
   background: rgba(15,32,96,0.28);
+  margin-top: 72px; /* ← ADD THIS - pushes below fixed header */
 }
 
 .si {
@@ -2489,6 +2490,135 @@ footer::before {
 .back-to-top.show {
   display: flex;
 }
+/* Guide Page Styles */
+.guide-tab {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--div);
+  color: var(--gray);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.guide-tab:hover {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+
+.guide-tab.active {
+  background: linear-gradient(135deg, var(--amber), var(--amber3));
+  color: var(--bg);
+  border-color: transparent;
+}
+
+.guide-card {
+  background: var(--card);
+  border: 1px solid var(--bord);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.guide-step {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--amber), var(--amber3));
+  color: var(--bg);
+  font-family: 'Anton', sans-serif;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.guide-card h4 {
+  font-family: 'Anton', sans-serif;
+  color: var(--amber);
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.guide-card p, .guide-card li {
+  color: var(--offwh);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.guide-note {
+  background: rgba(246,168,28,0.08);
+  border: 1px solid rgba(246,168,28,0.2);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  color: var(--offwh);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.guide-example {
+  background: rgba(0,0,0,0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.guide-example h5 {
+  color: var(--amber);
+  font-family: 'Rajdhani', sans-serif;
+  margin-bottom: 8px;
+}
+
+.guide-example table {
+  border-collapse: collapse;
+}
+
+.guide-example th {
+  color: var(--gray);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--div);
+}
+
+.guide-example td {
+  color: var(--white);
+  padding: 8px;
+  font-size: 14px;
+}
+
+.faq-item {
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--div);
+}
+
+.faq-item h5 {
+  color: var(--amber);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.faq-item p {
+  color: var(--offwh);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 960px) {
+  .guide-card {
+    grid-template-columns: 1fr;
+  }
+}
 
 @media (max-width: 960px) {
   footer {
@@ -2541,12 +2671,13 @@ footer::before {
     </div>
   </a>
   
-  <nav>
-    <button class="np on" onclick="goPage('matches',this)">⚽ Matches</button>
-    <button class="np" onclick="goPage('ultimate',this)">⚡ Ultimate</button>
-    <button class="np" onclick="goPage('mybets',this)">🎯 My Bets</button>
-    <button class="np" onclick="goPage('leaderboard',this)">🏆 Rankings</button>
-  </nav>
+ <nav>
+  <button class="np on" onclick="goPage('matches',this)">⚽ Matches</button>
+  <button class="np" onclick="goPage('ultimate',this)">⚡ Ultimate</button>
+  <button class="np" onclick="goPage('mybets',this)">🎯 My Bets</button>
+  <button class="np" onclick="goPage('leaderboard',this)">🏆 Rankings</button>
+  <button class="np" onclick="goPage('howitworks',this)">📖 How It Works</button>
+</nav>
   
   <div class="hr">
     <div class="bchip" id="bchip">
@@ -2798,61 +2929,171 @@ footer::before {
     </div>
   </div>
 </div>
+<!-- HOW IT WORKS PAGE -->
+<div class="page" id="pg-howitworks">
+  
+  <div class="sec-head">
+    <div class="sec-t">How It <em>Works</em></div>
+    <div class="chip ca">Everything you need to know</div>
+  </div>
 
+  <!-- Tabs -->
+  <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:32px;">
+    <button class="guide-tab active" onclick="switchGuideTab('betting', this)">🎯 Betting</button>
+    <button class="guide-tab" onclick="switchGuideTab('pools', this)">📊 Pools & Odds</button>
+    <button class="guide-tab" onclick="switchGuideTab('winning', this)">💰 Winning & Claims</button>
+    <button class="guide-tab" onclick="switchGuideTab('ultimate', this)">🏆 Ultimate Bet</button>
+    <button class="guide-tab" onclick="switchGuideTab('ai', this)">🤖 AI Analysis</button>
+    <button class="guide-tab" onclick="switchGuideTab('faq', this)">❓ FAQ</button>
+  </div>
+
+  <!-- Tab Content: Betting -->
+  <div id="guide-betting" class="guide-content" style="display:block;">
+    <div style="display:grid; grid-template-columns: repeat(3,1fr); gap:20px;">
+      <div class="guide-card">
+        <div class="guide-step">1</div>
+        <h4>Connect Wallet</h4>
+        <p>Connect your MetaMask or WalletConnect on <strong>Base Mainnet</strong>. You'll need CLUTCH tokens and a small amount of ETH for gas.</p>
+      </div>
+      <div class="guide-card">
+        <div class="guide-step">2</div>
+        <h4>Browse Matches</h4>
+        <p>Explore all 102 World Cup matches organized by groups. Check live odds, pool sizes, and match details.</p>
+      </div>
+      <div class="guide-card">
+        <div class="guide-step">3</div>
+        <h4>Place Your Bet</h4>
+        <p>Choose <strong>Home Win</strong>, <strong>Draw</strong>, or <strong>Away Win</strong>. Enter your CLUTCH amount and confirm two transactions: Approve + Bet.</p>
+      </div>
+    </div>
+    <div class="guide-note">
+      ⚠️ <strong>Important:</strong> First time betting? You'll need to approve the betting contract to spend your CLUTCH tokens. This is a one-time approval per token amount.
+    </div>
+  </div>
+
+  <!-- Tab Content: Pools & Odds -->
+  <div id="guide-pools" class="guide-content" style="display:none;">
+    <div class="guide-card" style="max-width:100%;">
+      <h4>📊 Parimutuel Betting Explained</h4>
+      <p>CLUTCH uses <strong>parimutuel betting</strong> — all bets go into shared pools. Your odds depend on how much is bet on each outcome, not fixed by the platform.</p>
+      
+      <div class="guide-example">
+        <h5>Example: Brazil vs Argentina (Total Pool: 1,000 CLUTCH)</h5>
+        <table style="width:100%; margin:16px 0;">
+          <tr><th>Outcome</th><th>Amount Bet</th><th>Implied Odds</th></tr>
+          <tr><td>Brazil Win</td><td>500 CLUTCH</td><td>50%</td></tr>
+          <tr><td>Draw</td><td>300 CLUTCH</td><td>30%</td></tr>
+          <tr><td>Argentina Win</td><td>200 CLUTCH</td><td>20%</td></tr>
+        </table>
+        <p>The odds bar on each match card shows real-time pool distribution. It updates as more bets come in!</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Content: Winning & Claims -->
+  <div id="guide-winning" class="guide-content" style="display:none;">
+    <div class="guide-card" style="max-width:100%;">
+      <h4>💰 How Payouts Work</h4>
+      
+      <div class="guide-example">
+        <h5>If Brazil Wins (from example above):</h5>
+        <table style="width:100%; margin:16px 0;">
+          <tr><th>Step</th><th>Calculation</th><th>Result</th></tr>
+          <tr><td>Total Pool</td><td>500 + 300 + 200</td><td>1,000 CLUTCH</td></tr>
+          <tr><td>Platform Fee (3%)</td><td>1,000 × 3%</td><td>30 CLUTCH → Treasury</td></tr>
+          <tr><td>Prize Pool (97%)</td><td>1,000 - 30</td><td>970 CLUTCH</td></tr>
+          <tr><td>Winning Pool</td><td>Brazil bets only</td><td>500 CLUTCH</td></tr>
+        </table>
+        <p><strong>If you bet 100 CLUTCH on Brazil:</strong><br>
+        Your share = 100/500 = 20%<br>
+        Payout = 20% × 970 = <strong>194 CLUTCH</strong> (+94 profit!)</p>
+      </div>
+
+      <div class="guide-note">
+        🎯 <strong>Claiming:</strong> After the match is settled, go to <strong>My Bets</strong> and click <strong>Claim</strong>. Winnings are sent directly to your wallet!
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Content: Ultimate Bet -->
+  <div id="guide-ultimate" class="guide-content" style="display:none;">
+    <div class="guide-card" style="max-width:100%;">
+      <h4>🏆 Ultimate Bet — Predict the Champion</h4>
+      <p>Instead of betting on individual matches, bet on which team will <strong>win the entire World Cup 2026</strong>.</p>
+      <ul style="color:var(--offwh); line-height:2; margin:16px 0; padding-left:20px;">
+        <li>One pool for all teams</li>
+        <li>Bet anytime before the <strong>Final kicks off (July 26, 2026)</strong></li>
+        <li>If your team wins the tournament, you split 97% of the ultimate pool</li>
+        <li>Multiple winners? Split proportionally by bet size</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tab Content: AI Analysis -->
+  <div id="guide-ai" class="guide-content" style="display:none;">
+    <div class="guide-card" style="max-width:100%;">
+      <h4>🤖 AI-Powered Match Analysis</h4>
+      <p>Every match has a <strong>"AI Match Analysis"</strong> button. Our AI agent (Google Gemini) searches the internet in real-time for:</p>
+      <ul style="color:var(--offwh); line-height:2; margin:16px 0; padding-left:20px;">
+        <li>Team form (last 5-10 matches)</li>
+        <li>Head-to-head history</li>
+        <li>Injury news & suspensions</li>
+        <li>Expected goals (xG)</li>
+        <li>Betting recommendations</li>
+      </ul>
+      <div class="guide-note">
+        💡 <strong>Pro tip:</strong> Use AI analysis to inform your bets, but remember — football is unpredictable!
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Content: FAQ -->
+  <div id="guide-faq" class="guide-content" style="display:none;">
+    <div class="guide-card" style="max-width:100%;">
+      <h4>❓ Frequently Asked Questions</h4>
+      
+      <div class="faq-item">
+        <h5>What is CLUTCH?</h5>
+        <p>CLUTCH is a decentralized prediction market on Base for World Cup 2026. Bet CLUTCH tokens, win automatically.</p>
+      </div>
+      <div class="faq-item">
+        <h5>How do I get CLUTCH tokens?</h5>
+        <p>CLUTCH tokens are available on Base Mainnet. Check our community channels for distribution details.</p>
+      </div>
+      <div class="faq-item">
+        <h5>Are my funds safe?</h5>
+        <p>Yes! All bets are held by an immutable smart contract. Only you can claim your winnings. The contract is verified on Base Explorer.</p>
+      </div>
+      <div class="faq-item">
+        <h5>When can I claim winnings?</h5>
+        <p>After the match ends and the oracle settles the result on-chain. This happens automatically within minutes of the final whistle.</p>
+      </div>
+      <div class="faq-item">
+        <h5>What happens if a match is cancelled?</h5>
+        <p>All bets on cancelled matches are fully refunded. You get back exactly what you put in.</p>
+      </div>
+      <div class="faq-item">
+        <h5>What chain is CLUTCH on?</h5>
+        <p>Base Mainnet (Chain ID: 8453). Fast, low-cost Ethereum L2 powered by Coinbase.</p>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- MOBILE NAVIGATION -->
 <nav class="mnav-bar">
   <div class="mnav-inner">
-    <button class="mn on" onclick="goPage('matches',this)">
-      <span class="mn-ic">⚽</span>Matches
-    </button>
-    <button class="mn" onclick="goPage('ultimate',this)">
-      <span class="mn-ic">⚡</span>Ultimate
-    </button>
-    <button class="mn" onclick="goPage('mybets',this)">
-      <span class="mn-ic">🎯</span>My Bets
-    </button>
-    <button class="mn" onclick="goPage('leaderboard',this)">
-      <span class="mn-ic">🏆</span>Ranks
-    </button>
+    <button class="mn on" onclick="goPage('matches',this)"><span class="mn-ic">⚽</span>Matches</button>
+    <button class="mn" onclick="goPage('ultimate',this)"><span class="mn-ic">⚡</span>Ultimate</button>
+    <button class="mn" onclick="goPage('mybets',this)"><span class="mn-ic">🎯</span>My Bets</button>
+    <button class="mn" onclick="goPage('leaderboard',this)"><span class="mn-ic">🏆</span>Ranks</button>
+    <button class="mn" onclick="goPage('howitworks',this)"><span class="mn-ic">📖</span>Guide</button>
   </div>
 </nav>
 <!-- BACK TO TOP BUTTON -->
 <button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
   <i class="fas fa-arrow-up"></i>
 </button>
-<!-- HOW TO PLAY SECTION -->
-<div id="how-it-works" style="max-width: 1200px; margin: 80px auto 0; padding: 40px; background: var(--card); border: 1px solid var(--bord); border-radius: 20px;">
-  <div class="sec-head">
-    <div class="sec-t">How to <em>Play</em></div>
-  </div>
-  
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px;">
-    <div style="text-align: center; padding: 24px;">
-      <div style="font-size: 48px; margin-bottom: 12px;">1️⃣</div>
-      <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 8px;">Connect Wallet</h4>
-      <p style="color: var(--offwh); font-size: 14px;">Connect with MetaMask or WalletConnect on Base Mainnet. Get CLUTCH tokens to start betting.</p>
-    </div>
-    <div style="text-align: center; padding: 24px;">
-      <div style="font-size: 48px; margin-bottom: 12px;">2️⃣</div>
-      <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 8px;">Place Your Prediction</h4>
-      <p style="color: var(--offwh); font-size: 14px;">Choose Home Win, Draw, or Away Win. Stake CLUTCH tokens. Odds update in real-time as more bets come in.</p>
-    </div>
-    <div style="text-align: center; padding: 24px;">
-      <div style="font-size: 48px; margin-bottom: 12px;">3️⃣</div>
-      <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 8px;">Win & Claim</h4>
-      <p style="color: var(--offwh); font-size: 14px;">After the match ends, winners claim their share of the pool. 97% goes to winners automatically!</p>
-    </div>
-  </div>
-  
-  <div style="margin-top: 32px; padding: 20px; background: rgba(246,168,28,0.05); border-radius: 12px; border: 1px solid var(--bord);">
-    <h4 style="font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 12px;">📊 How Payouts Work</h4>
-    <p style="color: var(--offwh); font-size: 14px; line-height: 1.8;">
-      CLUTCH uses <strong>parimutuel betting</strong> — all bets go into a shared pool. 
-      Winners split 97% of the pool proportionally to their bet size. 
-      The more you bet, the bigger your share. Simple and fair!
-    </p>
-  </div>
-</div>
+
 <!-- PRIVACY MODAL -->
 <div id="privacyModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; z-index:9999; background:rgba(7,17,43,0.97); align-items:center; justify-content:center;" onclick="closePrivacyModal(event)">
   <div style="background:var(--navy); border:1px solid var(--bord); border-radius:20px; padding:40px; max-width:600px; width:90%; max-height:80vh; overflow-y:auto;" onclick="event.stopPropagation()">
@@ -3116,6 +3357,7 @@ let allMatches = [];
 let allMatchesRaw = [];        // Store all matches
 let currentGroupFilter = 'all';  // 'all', 'A', 'B', 'C', etc.
 let groupsMap = new Map();     // groupName -> matches[]
+let isLoadingMatches = false;
 
 // Helper function
 function $(id) { return document.getElementById(id); }
@@ -3128,19 +3370,28 @@ function goPage(page, btn) {
   document.querySelectorAll('.np, .mn').forEach(b => b.classList.remove('on'));
   $('pg-' + page).classList.add('on');
   
-  document.querySelectorAll('.np, .mn').forEach(b => {
-    if ((b.getAttribute('onclick') || '').includes("'" + page + "'")) {
-      b.classList.add('on');
-    }
-  });
+  if (btn) btn.classList.add('on');
+  else {
+    document.querySelectorAll('.np, .mn').forEach(b => {
+      if ((b.getAttribute('onclick') || '').includes("'" + page + "'")) b.classList.add('on');
+    });
+  }
   
+  // Show hero only on matches page
   $('hero').style.display = page === 'matches' ? '' : 'none';
   
+  // Show stats bar on ALL pages
+  document.querySelector('.sbar').style.display = '';
+  
+  // Load data based on page
+  if (page === 'matches') loadMatches();
   if (page === 'mybets') loadMyBets();
   if (page === 'leaderboard') loadLeaderboard();
   if (page === 'ultimate') renderUltimate();
+  
+  // Always refresh stats
+  loadStats();
 }
-
 // ══════════════════════════════════════════════════════════════════
 //  AI ANALYSIS FUNCTIONS - UPDATED WITH DEBUG
 // ══════════════════════════════════════════════════════════════════
@@ -3762,100 +4013,89 @@ function countUp(id, target) {
 // REPLACE the existing loadMatches() function:
 
   async function loadMatches() {
-  const data = await api('/matches');
-  if (!data || !data.matches) {
-    $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
-    return;
-  }
+  // Prevent multiple simultaneous loads
+  if (isLoadingMatches) return;
+  isLoadingMatches = true;
   
-  allMatchesRaw = data.matches || [];
-  
-  // 🔴 FETCH REAL POOLS FROM CONTRACT
-  if (wallet && !CFG.BETTING.includes('YourBetting')) {
-    try {
-      const betting = new ethers.Contract(CFG.BETTING, [
-        "function matchCount() view returns (uint256)",
-        "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
-      ], wallet.provider);
-      
-      // Get how many matches exist on-chain
-      const onChainCount = Number(await betting.matchCount());
-      
-      for (let match of allMatchesRaw) {
-        // Map backend ID (1-102) to contract ID (0-101)
-        const contractId = match.id - 1;
+  try {
+    const data = await api('/matches');
+    if (!data || !data.matches) {
+      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
+      return;
+    }
+    
+    allMatchesRaw = data.matches || [];
+    
+    // Fetch real pools from contract
+    if (wallet && !CFG.BETTING.includes('YourBetting')) {
+      try {
+        const betting = new ethers.Contract(CFG.BETTING, [
+          "function matchCount() view returns (uint256)",
+          "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
+        ], wallet.provider);
         
-        // Skip if match doesn't exist on-chain
-        if (contractId >= onChainCount) {
-          match.pools = { home: "0", draw: "0", away: "0", total: "0" };
-          match.odds = { home: 0, draw: 0, away: 0 };
-          continue;
-        }
+        const onChainCount = Number(await betting.matchCount());
         
-        try {
-          const cm = await betting.getMatch(contractId);
-          // Tuple: [0]homeTeam, [1]awayTeam, [2]startTime, [3]betDeadline, [4]outcome, [5]settled, [6]poolHome, [7]poolDraw, [8]poolAway, [9]totalPool
-          const home = parseFloat(ethers.formatUnits(cm[6], 9));
-          const draw = parseFloat(ethers.formatUnits(cm[7], 9));
-          const away = parseFloat(ethers.formatUnits(cm[8], 9));
-          const total = parseFloat(ethers.formatUnits(cm[9], 9));
-
+        for (let match of allMatchesRaw) {
+          const contractId = match.id - 1;
+          if (contractId >= onChainCount) {
+            match.pools = { home: "0", draw: "0", away: "0", total: "0" };
+            match.odds = { home: 0, draw: 0, away: 0 };
+            continue;
+          }
           
-          match.pools = {
-            home: home.toFixed(2),
-            draw: draw.toFixed(2),
-            away: away.toFixed(2),
-            total: total.toFixed(2)
-          };
-          
-          if (total > 0) {
-            match.odds = {
+          try {
+            const cm = await betting.getMatch(contractId);
+            // Use 9 decimals for CLUTCH token
+            const home = parseFloat(ethers.formatUnits(cm[6], 9));
+            const draw = parseFloat(ethers.formatUnits(cm[7], 9));
+            const away = parseFloat(ethers.formatUnits(cm[8], 9));
+            const total = parseFloat(ethers.formatUnits(cm[9], 9));
+            
+            match.pools = {
+              home: home.toFixed(2),
+              draw: draw.toFixed(2),
+              away: away.toFixed(2),
+              total: total.toFixed(2)
+            };
+            
+            match.odds = total > 0 ? {
               home: Number(((home / total) * 100).toFixed(2)),
               draw: Number(((draw / total) * 100).toFixed(2)),
               away: Number(((away / total) * 100).toFixed(2))
-            };
-          } else {
+            } : { home: 0, draw: 0, away: 0 };
+          } catch(e) {
+            match.pools = { home: "0", draw: "0", away: "0", total: "0" };
             match.odds = { home: 0, draw: 0, away: 0 };
           }
-        } catch (e) {
-          match.pools = { home: "0", draw: "0", away: "0", total: "0" };
-          match.odds = { home: 0, draw: 0, away: 0 };
         }
+      } catch(err) {
+        console.warn('Contract not available:', err.message);
       }
-    } catch (err) {
-      console.warn('Contract not available:', err.message);
-      allMatchesRaw.forEach(m => {
-        m.pools = { home: "0", draw: "0", away: "0", total: "0" };
-        m.odds = { home: 0, draw: 0, away: 0 };
-      });
     }
-  } else {
-    allMatchesRaw.forEach(m => {
-      m.pools = { home: "0", draw: "0", away: "0", total: "0" };
-      m.odds = { home: 0, draw: 0, away: 0 };
+    
+    // Build groups
+    groupsMap.clear();
+    allMatchesRaw.forEach(match => {
+      let group = match.group || match.round || 'Group Stage';
+      if (match.group) group = `Group ${match.group}`;
+      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
+        group = 'Knockout';
+      }
+      if (['Final', 'Third Place'].includes(match.round)) {
+        group = 'Final';
+      }
+      if (!groupsMap.has(group)) groupsMap.set(group, []);
+      groupsMap.get(group).push(match);
     });
+    
+    renderGroupTabs();
+    applyGroupFilter();
+    $('mchip').textContent = allMatchesRaw.length + ' Matches';
+    
+  } finally {
+    isLoadingMatches = false;
   }
-  
-  // Build groups from matches
-  groupsMap.clear();
-  allMatchesRaw.forEach(match => {
-    let group = match.group || match.round || 'Group Stage';
-    
-    if (match.group) group = `Group ${match.group}`;
-    if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
-      group = 'Knockout';
-    }
-    if (['Final', 'Third Place'].includes(match.round)) {
-      group = 'Final';
-    }
-    
-    if (!groupsMap.has(group)) groupsMap.set(group, []);
-    groupsMap.get(group).push(match);
-  });
-  
-  renderGroupTabs();
-  applyGroupFilter();
-  $('mchip').textContent = allMatchesRaw.length + ' Matches';
 }
 // REPLACE the renderGroupTabs() function:
 
@@ -3909,6 +4149,15 @@ function renderGroupTabs() {
       applyGroupFilter();
     });
   });
+}
+function switchGuideTab(tabName, btn) {
+  // Hide all content
+  document.querySelectorAll('.guide-content').forEach(c => c.style.display = 'none');
+  // Remove active from all tabs
+  document.querySelectorAll('.guide-tab').forEach(t => t.classList.remove('active'));
+  // Show selected
+  document.getElementById('guide-' + tabName).style.display = 'block';
+  btn.classList.add('active');
 }
 
 // Helper function to determine group from team (based on World Cup 2026 draw)
@@ -4512,7 +4761,7 @@ window.addEventListener('load', () => {
   setInterval(() => {
     loadMatches();
     loadStats();
-  }, 30000);
+  }, 300000);
 });
 window.addEventListener('scroll', () => {
   const backBtn = document.getElementById('backToTop');
