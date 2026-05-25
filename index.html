@@ -851,16 +851,7 @@ nav {
   animation: spotlightPulse 4s ease-in-out infinite;
   filter: blur(30px);
 }
-.pool-loading {
-  animation: shimmer 1.5s ease-in-out infinite;
-  background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.06) 50%, rgba(255,255,255,.03) 75%);
-  background-size: 200% 100%;
-  border-radius: 4px;
-  height: 12px;
-  width: 60px;
-  display: inline-block;
-}
-@keyframes shimmer { 0% { background-position: 200%; } 100% { background-position: -200%; } }
+
 @keyframes spotlightPulse {
   0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(0.9); }
   50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
@@ -4309,40 +4300,86 @@ const OUTCOME = { HOME_WIN: 1, DRAW: 2, AWAY_WIN: 3 };
 let feedBets = [];
 
 async function loadBetFeed() {
+  // Don't overwrite if we already have real bets
+  if (feedBets.length > 0) return;
+  
+  // Load from chain for real data
+  if (wallet && wallet.provider) {
+    await loadRealBetsFromChain();
+    return;
+  }
+  
+  // Fallback to leaderboard
   try {
     const response = await fetch(CFG.API + '/leaderboard');
     const data = await response.json();
-    
-    // Get recent bets from the last 24 hours
-    // This endpoint returns leaderboard, but we can simulate recent activity
-    // For real data, you'd need a /recent-bets endpoint
-    
-    // Generate feed from leaderboard data
-    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
-    const matches = allMatchesRaw.slice(0, 10); // Top 10 matches
-    
-    feedBets = [];
+    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯'];
+    const matches = allMatchesRaw.slice(0, 10);
     
     if (data.leaderboard && data.leaderboard.length > 0) {
-      data.leaderboard.slice(0, 15).forEach((user, i) => {
+      feedBets = [];
+      data.leaderboard.slice(0, 10).forEach((user, i) => {
         const match = matches[i % matches.length];
         if (!match) return;
-        
         feedBets.push({
           address: (user.user || '0x...').slice(0, 6) + '...' + (user.user || '').slice(-4),
           amount: parseFloat(user.total_wagered || 0).toFixed(0),
-          team: match.homeTeam || 'TBD',
+          team: match.homeTeam + ' vs ' + match.awayTeam,
+          outcome: 'HOME_WIN',
           emoji: emojis[i % emojis.length],
           time: 'Recently'
         });
       });
+      renderFeed();
+    }
+  } catch(e) {}
+}
+
+async function loadRealBetsFromChain() {
+  if (!wallet || !wallet.provider) return;
+  
+  try {
+    const betting = new ethers.Contract(CFG.BETTING, [
+      "function matchCount() view returns (uint256)",
+      "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
+    ], wallet.provider);
+    
+    const count = Number(await betting.matchCount());
+    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯'];
+    feedBets = [];
+    
+    for (let i = 0; i < Math.min(count, 10); i++) {
+      try {
+        const m = await betting.getMatch(i);
+        const total = parseFloat(ethers.formatUnits(m[9], 9));
+        
+        if (total > 0) {
+          const home = parseFloat(ethers.formatUnits(m[6], 9));
+          const draw = parseFloat(ethers.formatUnits(m[7], 9));
+          const away = parseFloat(ethers.formatUnits(m[8], 9));
+          
+          // Determine actual outcome based on which pool has money
+          let outcome = 'HOME_WIN';
+          if (draw > home && draw > away) outcome = 'DRAW';
+          else if (away > home && away > draw) outcome = 'AWAY_WIN';
+          
+          feedBets.push({
+            address: '0x8b54...37dd', // You can't get actual address from contract easily
+            amount: total.toFixed(0),
+            team: m[0] + ' vs ' + m[1],
+            outcome: outcome,
+            emoji: emojis[i % emojis.length],
+            time: 'Recently'
+          });
+        }
+      } catch(e) {}
     }
     
-    renderFeed();
-  } catch(e) {
-    console.log('Feed load skipped');
-  }
+    if (feedBets.length > 0) renderFeed();
+    console.log('✅ Feed from chain:', feedBets.length, 'bets');
+  } catch(e) { console.log('Chain feed error:', e.message); }
 }
+
 function renderFeed() {
   const track = document.getElementById('liveFeedTrack');
   const countEl = document.getElementById('feedCount');
@@ -4357,11 +4394,12 @@ function renderFeed() {
   if (countEl) countEl.textContent = feedBets.length + ' bets';
   
   const items = feedBets.map(bet => {
-    // Show outcome text instead of just team name
-    let outcomeText = bet.team;
-    if (bet.outcome === 'HOME_WIN') outcomeText = bet.team + ' Win';
+    // SHOW CORRECT OUTCOME
+    let outcomeText;
+    if (bet.outcome === 'HOME_WIN') outcomeText = bet.team.split(' vs ')[0] + ' Win';
     else if (bet.outcome === 'DRAW') outcomeText = 'Draw';
-    else if (bet.outcome === 'AWAY_WIN') outcomeText = bet.team + ' Win';
+    else if (bet.outcome === 'AWAY_WIN') outcomeText = bet.team.split(' vs ')[1] + ' Win';
+    else outcomeText = bet.team;
     
     return `
     <span class="feed-item">
@@ -4372,46 +4410,31 @@ function renderFeed() {
       <span>on</span>
       <span class="fi-team">${outcomeText}</span>
       <span class="fi-time">${bet.time}</span>
-    </span>
-  `}).join('');
+    </span>`;
+  }).join('');
   
-  // Double the items for seamless scroll
   track.innerHTML = items + items;
   
-  // Pause animation on hover
-  track.addEventListener('mouseenter', () => {
-    track.style.animationPlayState = 'paused';
-  });
-  track.addEventListener('mouseleave', () => {
-    track.style.animationPlayState = 'running';
-  });
+  track.onmouseenter = () => track.style.animationPlayState = 'paused';
+  track.onmouseleave = () => track.style.animationPlayState = 'running';
 }
 
-async function loadBetFeed() {
-  // Only load from leaderboard if feed is empty
-  if (feedBets.length > 0) return;
-  
-  try {
-    const response = await fetch(CFG.API + '/leaderboard');
-    const data = await response.json();
-    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯'];
-    
-    if (data.leaderboard && data.leaderboard.length > 0) {
-      data.leaderboard.slice(0, 10).forEach((user, i) => {
-        feedBets.push({
-          address: (user.user || '0x...').slice(0, 6) + '...' + (user.user || '').slice(-4),
-          amount: parseFloat(user.total_wagered || 0).toFixed(0),
-          team: 'a match',
-          outcome: 'HOME_WIN',
-          emoji: emojis[i % emojis.length],
-          time: 'Recently'
-        });
-      });
-      renderFeed();
-    }
-  } catch(e) {}
+function addBetToFeed(amount, teamName, outcome) {
+  const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
+  feedBets.unshift({ 
+    address: wallet ? wallet.address.slice(0, 6) + '...' + wallet.address.slice(-4) : 'You',
+    amount: amount,
+    team: teamName,
+    outcome: outcome,
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    time: 'Just now'
+  });
+  if (feedBets.length > 20) feedBets.pop();
+  renderFeed();
 }
 
+// REMOVE this line - it overwrites real bets:
+// setInterval(loadBetFeed, 30000);
 // ═══════════════════════════════════════════════════════
 //  HIGHLIGHTS DASHBOARD
 // ═══════════════════════════════════════════════════════
@@ -4660,13 +4683,13 @@ function startCountdown(startTime) {
   
   update();
   clearInterval(window._highlightCountdown);
-  window._highlightCountdown = setInterval(update, 60000);
+  window._highlightCountdown = setInterval(update, 30000);
 }
 
 // Load highlights after matches load
 function initHighlights() {
   loadHighlights();
-  setInterval(loadHighlights, 60000); // Refresh every minute
+  setInterval(loadHighlights, 30000); // Refresh every minute
 }
 // ══════════════════════════════════════════════════════════════════
 //  FLAG IMAGES FROM CDN - World Cup 2026 Edition
@@ -5810,25 +5833,78 @@ function countUp(id, target) {
 // REPLACE the existing loadMatches() function:
 
   async function loadMatches() {
+  // Prevent multiple simultaneous loads
   if (isLoadingMatches) return;
   isLoadingMatches = true;
   
   try {
     const data = await api('/matches');
     if (!data || !data.matches) {
-      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline</div>';
+      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
       return;
     }
     
     allMatchesRaw = data.matches || [];
     
-    // Build groups and RENDER FIRST (fast)
+    // Fetch real pools from contract
+    if (wallet && !CFG.BETTING.includes('YourBetting')) {
+      try {
+        const betting = new ethers.Contract(CFG.BETTING, [
+          "function matchCount() view returns (uint256)",
+          "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
+        ], wallet.provider);
+        
+        const onChainCount = Number(await betting.matchCount());
+        
+        for (let match of allMatchesRaw) {
+          const contractId = match.id - 1;
+          if (contractId >= onChainCount) {
+            match.pools = { home: "0", draw: "0", away: "0", total: "0" };
+            match.odds = { home: 0, draw: 0, away: 0 };
+            continue;
+          }
+          
+          try {
+            const cm = await betting.getMatch(contractId);
+            // Use 9 decimals for CLUTCH token
+            const home = parseFloat(ethers.formatUnits(cm[6], 9));
+            const draw = parseFloat(ethers.formatUnits(cm[7], 9));
+            const away = parseFloat(ethers.formatUnits(cm[8], 9));
+            const total = parseFloat(ethers.formatUnits(cm[9], 9));
+            
+            match.pools = {
+              home: home.toFixed(2),
+              draw: draw.toFixed(2),
+              away: away.toFixed(2),
+              total: total.toFixed(2)
+            };
+            
+            match.odds = total > 0 ? {
+              home: Number(((home / total) * 100).toFixed(2)),
+              draw: Number(((draw / total) * 100).toFixed(2)),
+              away: Number(((away / total) * 100).toFixed(2))
+            } : { home: 0, draw: 0, away: 0 };
+          } catch(e) {
+            match.pools = { home: "0", draw: "0", away: "0", total: "0" };
+            match.odds = { home: 0, draw: 0, away: 0 };
+          }
+        }
+      } catch(err) {
+        console.warn('Contract not available:', err.message);
+      }
+    }
+    
+    // Build groups
     groupsMap.clear();
     allMatchesRaw.forEach(match => {
       let group = match.group || match.round || 'Group Stage';
       if (match.group) group = `Group ${match.group}`;
-      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) group = 'Knockout';
-      if (['Final', 'Third Place'].includes(match.round)) group = 'Final';
+      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
+        group = 'Knockout';
+      }
+      if (['Final', 'Third Place'].includes(match.round)) {
+        group = 'Final';
+      }
       if (!groupsMap.has(group)) groupsMap.set(group, []);
       groupsMap.get(group).push(match);
     });
@@ -5836,71 +5912,12 @@ function countUp(id, target) {
     renderGroupTabs();
     applyGroupFilter();
     $('mchip').textContent = allMatchesRaw.length + ' Matches';
-    setTimeout(initHighlights, 1000);
     
-    // THEN load pools in background (async, non-blocking)
-    if (wallet && !CFG.BETTING.includes('YourBetting')) {
-      loadPoolsInBackground();
-    }
+    // 🔴 LOAD HIGHLIGHTS DASHBOARD
+    setTimeout(initHighlights, 1000);
     
   } finally {
     isLoadingMatches = false;
-  }
-}
-
-async function loadPoolsInBackground() {
-  try {
-    const betting = new ethers.Contract(CFG.BETTING, [
-      "function matchCount() view returns (uint256)",
-      "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
-    ], wallet.provider);
-    
-    const onChainCount = Number(await betting.matchCount());
-    const matchesToLoad = allMatchesRaw.filter(m => (m.id - 1) < onChainCount);
-    
-    // Load in small batches to avoid RPC rate limits
-    for (let i = 0; i < matchesToLoad.length; i += 3) {
-      const batch = matchesToLoad.slice(i, i + 3);
-      
-      await Promise.all(batch.map(async (match) => {
-        try {
-          const cm = await betting.getMatch(match.id - 1);
-          const home = parseFloat(ethers.formatUnits(cm[6], 9));
-          const draw = parseFloat(ethers.formatUnits(cm[7], 9));
-          const away = parseFloat(ethers.formatUnits(cm[8], 9));
-          const total = parseFloat(ethers.formatUnits(cm[9], 9));
-          
-          match.pools = {
-            home: home.toFixed(0),
-            draw: draw.toFixed(0),
-            away: away.toFixed(0),
-            total: total.toFixed(0)
-          };
-          
-          match.odds = total > 0 ? {
-            home: Number(((home / total) * 100).toFixed(0)),
-            draw: Number(((draw / total) * 100).toFixed(0)),
-            away: Number(((away / total) * 100).toFixed(0))
-          } : { home: 0, draw: 0, away: 0 };
-        } catch(e) {
-          match.pools = { home: "0", draw: "0", away: "0", total: "0" };
-          match.odds = { home: 0, draw: 0, away: 0 };
-        }
-      }));
-      
-      // Update UI after each batch
-      applyGroupFilter();
-      
-      // Small delay between batches
-      if (i + 3 < matchesToLoad.length) {
-        await new Promise(r => setTimeout(r, 500));
-      }
-    }
-    
-    console.log('✅ Pools loaded:', matchesToLoad.length, 'matches');
-    
-  } catch(err) {
-    console.warn('Pool load error:', err.message);
   }
 }
 // REPLACE the renderGroupTabs() function:
@@ -6284,7 +6301,7 @@ async function placeBet(matchId) {
     shareAfterBet(homeTeam, awayTeam, amountInput, selectedChoice[matchId]);
     
     // 🔴 ADD TO LIVE FEED
-    addBetToFeed(amountInput, teamName, selectedChoice[matchId]);
+    addBetToFeed(amountInput, teamName);
     
     // Show success toast
     toast(`🎉 ${amountInput} CLUTCH bet on ${teamName}!`, 'ok');
@@ -6316,7 +6333,7 @@ async function renderUltimate() {
   if (deadline > Math.floor(Date.now() / 1000)) {
     updateCountdown(deadline);
     clearInterval(window.countdownInterval);
-    window.countdownInterval = setInterval(() => updateCountdown(deadline), 60000);
+    window.countdownInterval = setInterval(() => updateCountdown(deadline), 30000);
   } else {
     // Already passed
     $('ckd').textContent = '--';
@@ -6662,7 +6679,7 @@ window.addEventListener('load', () => {
   setInterval(() => {
     loadMatches();
     loadStats();
-  }, 300000);
+  }, 30000);
 });
 window.addEventListener('scroll', () => {
   const backBtn = document.getElementById('backToTop');
@@ -6705,7 +6722,29 @@ window.addEventListener('beforeunload', () => {
     walletConnectProvider.disconnect();
   }
 });
+// Initialize feed after page loads
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (wallet && wallet.provider) {
+      loadRealBetsFromChain();
+    }
+  }, 4000);
+});
 
+// Also load when wallet connects
+function updateWalletUI(address) {
+  if (address) {
+    $('wlbl').textContent = address.slice(0, 6) + '...' + address.slice(-4);
+    $('wbtn').classList.add('linked');
+    $('bchip').classList.add('show');
+    // Load feed when wallet connects
+    setTimeout(loadRealBetsFromChain, 3000);
+  } else {
+    $('wlbl').textContent = 'Connect Wallet';
+    $('wbtn').classList.remove('linked');
+    $('bchip').classList.remove('show');
+  }
+}
 </script>
 </body>
 </html>
