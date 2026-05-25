@@ -4334,7 +4334,6 @@ async function loadBetFeed() {
     console.log('Feed load skipped');
   }
 }
-
 function renderFeed() {
   const track = document.getElementById('liveFeedTrack');
   const countEl = document.getElementById('feedCount');
@@ -4348,17 +4347,24 @@ function renderFeed() {
   
   if (countEl) countEl.textContent = feedBets.length + ' bets';
   
-  const items = feedBets.map(bet => `
+  const items = feedBets.map(bet => {
+    // Show outcome text instead of just team name
+    let outcomeText = bet.team;
+    if (bet.outcome === 'HOME_WIN') outcomeText = bet.team + ' Win';
+    else if (bet.outcome === 'DRAW') outcomeText = 'Draw';
+    else if (bet.outcome === 'AWAY_WIN') outcomeText = bet.team + ' Win';
+    
+    return `
     <span class="feed-item">
       <span>${bet.emoji}</span>
       <span class="fi-address">${bet.address}</span>
       <span>bet</span>
       <span class="fi-amount">${bet.amount} CLUTCH</span>
       <span>on</span>
-      <span class="fi-team">${bet.team}</span>
+      <span class="fi-team">${outcomeText}</span>
       <span class="fi-time">${bet.time}</span>
     </span>
-  `).join('');
+  `}).join('');
   
   // Double the items for seamless scroll
   track.innerHTML = items + items;
@@ -4372,23 +4378,22 @@ function renderFeed() {
   });
 }
 
-// Add bet to feed after successful bet
-function addBetToFeed(amount, teamName) {
-  const bet = {
-    address: wallet ? (wallet.address.slice(0, 6) + '...' + wallet.address.slice(-4)) : 'You',
-    amount: amount,
+function addBetToFeed(amount, teamName, outcome) {
+  const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
+  feedBets.unshift({ 
+    address: wallet ? wallet.address.slice(0, 6) + '...' + wallet.address.slice(-4) : 'You',
+    amount, 
     team: teamName,
-    emoji: '⚡',
-    time: 'Just now'
-  };
-  
-  feedBets.unshift(bet);
+    outcome: outcome,
+    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    time: 'Just now' 
+  });
   if (feedBets.length > 20) feedBets.pop();
   renderFeed();
 }
 
 // Load feed periodically
-setInterval(loadBetFeed, 120000); // Every 2 minutes
+setInterval(loadBetFeed, 30000); // Every 30 secs
 
 // ═══════════════════════════════════════════════════════
 //  HIGHLIGHTS DASHBOARD
@@ -6256,7 +6261,7 @@ async function placeBet(matchId) {
     shareAfterBet(homeTeam, awayTeam, amountInput, selectedChoice[matchId]);
     
     // 🔴 ADD TO LIVE FEED
-    addBetToFeed(amountInput, teamName);
+    addBetToFeed(amountInput, teamName, selectedChoice[matchId]);
     
     // Show success toast
     toast(`🎉 ${amountInput} CLUTCH bet on ${teamName}!`, 'ok');
