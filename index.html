@@ -6107,7 +6107,7 @@ function renderMatchCard(m) {
         <button class="bgo" onclick="placeBet(${m.id})">BET</button>
       </div>
       <div class="pstrip">
-        ${poolValue > 0 ? `<span class="ptag">Pool: <b>${poolValue.toFixed(4)} ETH</b></span>` : ''}
+        ${poolValue > 0 ? `<span class="ptag">Pool: <b>${poolValue.toFixed(4)} CLUTCH</b></span>` : ''}
         <span class="ptag">Closes: <b>${new Date((m.betDeadline || m.startTime - 300) * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</b></span>
       </div>
     </div>`;
@@ -6115,7 +6115,7 @@ function renderMatchCard(m) {
     betUI = `
     <div style="padding-top:12px;text-align:center;">
       <span class="rp rw" style="animation: pulseDot 1.5s ease-in-out infinite;">🔴 LIVE</span>
-      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Pool: ${poolValue.toFixed(4)} ETH</div>` : ''}
+      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Pool: ${poolValue.toFixed(4)} CLUTCH</div>` : ''}
       <div style="color:var(--gray);font-size:12px;margin-top:4px;">Betting Closed</div>
     </div>`;
   } else if (isSettled) {
@@ -6123,7 +6123,7 @@ function renderMatchCard(m) {
     betUI = `
     <div style="padding-top:12px;text-align:center;">
       <span class="rp ${resultClass}">${(m.winner || 'Finished').replace(/_/g, ' ')}</span>
-      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Total Pool: ${poolValue.toFixed(4)} ETH</div>` : ''}
+      ${poolValue > 0 ? `<div style="color:var(--amber);font-size:13px;margin-top:8px;font-weight:700;">Total Pool: ${poolValue.toFixed(4)} CLUTCH</div>` : ''}
       <div style="color:var(--gray);font-size:12px;margin-top:4px;">Match Completed</div>
     </div>`;
   } else {
@@ -6279,7 +6279,7 @@ async function renderUltimate() {
   const teamPools = {};
   (data.teamPools || []).forEach(t => { teamPools[t.team] = t.amount; });
   
-  $('upool').textContent = parseFloat(data.totalPool || 0).toFixed(4) + ' ETH';
+ $('upool').textContent = parseFloat(data.totalPool || 0).toFixed(0) + ' CLUTCH';
   
   // Use the deadline from backend, or fallback to July 20, 2026
   const deadline = data.deadline || 1784577000;
@@ -6314,7 +6314,7 @@ async function renderUltimate() {
         <img src="${getFlagUrl(team)}" alt="${team}">
       </div>
       <div class="tn2">${team}</div>
-      <div class="tp2">${parseFloat(teamPools[team] || 0).toFixed(4)} ETH</div>
+      <div class="tp2">${parseFloat(teamPools[team] || 0).toFixed(0)} CLUTCH</div>
       <div class="tck">✓</div>
     </div>`
   ).join('');
