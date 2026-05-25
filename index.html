@@ -851,7 +851,16 @@ nav {
   animation: spotlightPulse 4s ease-in-out infinite;
   filter: blur(30px);
 }
-
+.pool-loading {
+  animation: shimmer 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.06) 50%, rgba(255,255,255,.03) 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  height: 12px;
+  width: 60px;
+  display: inline-block;
+}
+@keyframes shimmer { 0% { background-position: 200%; } 100% { background-position: -200%; } }
 @keyframes spotlightPulse {
   0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(0.9); }
   50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
@@ -5801,78 +5810,25 @@ function countUp(id, target) {
 // REPLACE the existing loadMatches() function:
 
   async function loadMatches() {
-  // Prevent multiple simultaneous loads
   if (isLoadingMatches) return;
   isLoadingMatches = true;
   
   try {
     const data = await api('/matches');
     if (!data || !data.matches) {
-      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline. Start the backend server.</div>';
+      $('mgrid').innerHTML = '<div style="grid-column:1/-1;padding:48px;color:var(--gray);text-align:center">⚠️ Backend offline</div>';
       return;
     }
     
     allMatchesRaw = data.matches || [];
     
-    // Fetch real pools from contract
-    if (wallet && !CFG.BETTING.includes('YourBetting')) {
-      try {
-        const betting = new ethers.Contract(CFG.BETTING, [
-          "function matchCount() view returns (uint256)",
-          "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
-        ], wallet.provider);
-        
-        const onChainCount = Number(await betting.matchCount());
-        
-        for (let match of allMatchesRaw) {
-          const contractId = match.id - 1;
-          if (contractId >= onChainCount) {
-            match.pools = { home: "0", draw: "0", away: "0", total: "0" };
-            match.odds = { home: 0, draw: 0, away: 0 };
-            continue;
-          }
-          
-          try {
-            const cm = await betting.getMatch(contractId);
-            // Use 9 decimals for CLUTCH token
-            const home = parseFloat(ethers.formatUnits(cm[6], 9));
-            const draw = parseFloat(ethers.formatUnits(cm[7], 9));
-            const away = parseFloat(ethers.formatUnits(cm[8], 9));
-            const total = parseFloat(ethers.formatUnits(cm[9], 9));
-            
-            match.pools = {
-              home: home.toFixed(2),
-              draw: draw.toFixed(2),
-              away: away.toFixed(2),
-              total: total.toFixed(2)
-            };
-            
-            match.odds = total > 0 ? {
-              home: Number(((home / total) * 100).toFixed(2)),
-              draw: Number(((draw / total) * 100).toFixed(2)),
-              away: Number(((away / total) * 100).toFixed(2))
-            } : { home: 0, draw: 0, away: 0 };
-          } catch(e) {
-            match.pools = { home: "0", draw: "0", away: "0", total: "0" };
-            match.odds = { home: 0, draw: 0, away: 0 };
-          }
-        }
-      } catch(err) {
-        console.warn('Contract not available:', err.message);
-      }
-    }
-    
-    // Build groups
+    // Build groups and RENDER FIRST (fast)
     groupsMap.clear();
     allMatchesRaw.forEach(match => {
       let group = match.group || match.round || 'Group Stage';
       if (match.group) group = `Group ${match.group}`;
-      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) {
-        group = 'Knockout';
-      }
-      if (['Final', 'Third Place'].includes(match.round)) {
-        group = 'Final';
-      }
+      if (['Round of 32', 'Round of 16', 'Quarter Final', 'Semi Final'].includes(match.round)) group = 'Knockout';
+      if (['Final', 'Third Place'].includes(match.round)) group = 'Final';
       if (!groupsMap.has(group)) groupsMap.set(group, []);
       groupsMap.get(group).push(match);
     });
@@ -5880,12 +5836,71 @@ function countUp(id, target) {
     renderGroupTabs();
     applyGroupFilter();
     $('mchip').textContent = allMatchesRaw.length + ' Matches';
-    
-    // 🔴 LOAD HIGHLIGHTS DASHBOARD
     setTimeout(initHighlights, 1000);
+    
+    // THEN load pools in background (async, non-blocking)
+    if (wallet && !CFG.BETTING.includes('YourBetting')) {
+      loadPoolsInBackground();
+    }
     
   } finally {
     isLoadingMatches = false;
+  }
+}
+
+async function loadPoolsInBackground() {
+  try {
+    const betting = new ethers.Contract(CFG.BETTING, [
+      "function matchCount() view returns (uint256)",
+      "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
+    ], wallet.provider);
+    
+    const onChainCount = Number(await betting.matchCount());
+    const matchesToLoad = allMatchesRaw.filter(m => (m.id - 1) < onChainCount);
+    
+    // Load in small batches to avoid RPC rate limits
+    for (let i = 0; i < matchesToLoad.length; i += 3) {
+      const batch = matchesToLoad.slice(i, i + 3);
+      
+      await Promise.all(batch.map(async (match) => {
+        try {
+          const cm = await betting.getMatch(match.id - 1);
+          const home = parseFloat(ethers.formatUnits(cm[6], 9));
+          const draw = parseFloat(ethers.formatUnits(cm[7], 9));
+          const away = parseFloat(ethers.formatUnits(cm[8], 9));
+          const total = parseFloat(ethers.formatUnits(cm[9], 9));
+          
+          match.pools = {
+            home: home.toFixed(0),
+            draw: draw.toFixed(0),
+            away: away.toFixed(0),
+            total: total.toFixed(0)
+          };
+          
+          match.odds = total > 0 ? {
+            home: Number(((home / total) * 100).toFixed(0)),
+            draw: Number(((draw / total) * 100).toFixed(0)),
+            away: Number(((away / total) * 100).toFixed(0))
+          } : { home: 0, draw: 0, away: 0 };
+        } catch(e) {
+          match.pools = { home: "0", draw: "0", away: "0", total: "0" };
+          match.odds = { home: 0, draw: 0, away: 0 };
+        }
+      }));
+      
+      // Update UI after each batch
+      applyGroupFilter();
+      
+      // Small delay between batches
+      if (i + 3 < matchesToLoad.length) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+    
+    console.log('✅ Pools loaded:', matchesToLoad.length, 'matches');
+    
+  } catch(err) {
+    console.warn('Pool load error:', err.message);
   }
 }
 // REPLACE the renderGroupTabs() function:
