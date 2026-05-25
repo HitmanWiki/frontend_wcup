@@ -4378,22 +4378,30 @@ function renderFeed() {
   });
 }
 
-function addBetToFeed(amount, teamName, outcome) {
-  const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
-  feedBets.unshift({ 
-    address: wallet ? wallet.address.slice(0, 6) + '...' + wallet.address.slice(-4) : 'You',
-    amount, 
-    team: teamName,
-    outcome: outcome,
-    emoji: emojis[Math.floor(Math.random() * emojis.length)],
-    time: 'Just now' 
-  });
-  if (feedBets.length > 20) feedBets.pop();
-  renderFeed();
+async function loadBetFeed() {
+  // Only load from leaderboard if feed is empty
+  if (feedBets.length > 0) return;
+  
+  try {
+    const response = await fetch(CFG.API + '/leaderboard');
+    const data = await response.json();
+    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯'];
+    
+    if (data.leaderboard && data.leaderboard.length > 0) {
+      data.leaderboard.slice(0, 10).forEach((user, i) => {
+        feedBets.push({
+          address: (user.user || '0x...').slice(0, 6) + '...' + (user.user || '').slice(-4),
+          amount: parseFloat(user.total_wagered || 0).toFixed(0),
+          team: 'a match',
+          outcome: 'HOME_WIN',
+          emoji: emojis[i % emojis.length],
+          time: 'Recently'
+        });
+      });
+      renderFeed();
+    }
+  } catch(e) {}
 }
-
-// Load feed periodically
-setInterval(loadBetFeed, 30000); // Every 30 secs
 
 // ═══════════════════════════════════════════════════════
 //  HIGHLIGHTS DASHBOARD
