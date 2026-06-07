@@ -569,9 +569,17 @@ async function loadStats() {
     document.getElementById('sFinished').textContent = allMatches.filter(m => m.status === 'FINISHED').length;
     document.getElementById('sLive').textContent = allMatches.filter(m => m.status !== 'FINISHED').length;
     
-    if (wallet) {
-      const betting = new ethers.Contract(CFG.BETTING, ['function matchCount() view returns (uint256)'], wallet.provider);
+    // On-chain count - use public RPC (works reliably)
+    try {
+      const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+      const betting = new ethers.Contract(
+        '0x0749F106AeA1a6Aa9Cb47ac61CEA2EAF33C18435',
+        ['function matchCount() external view returns (uint256)'],
+        provider
+      );
       document.getElementById('sOnchain').textContent = Number(await betting.matchCount());
+    } catch(e) {
+      document.getElementById('sOnchain').textContent = 'Error';
     }
   } catch(e) {}
 }
