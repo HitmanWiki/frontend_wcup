@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CLUTCH — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07112b;
+  --navy: #0a1840;
+  --royal: #0f2060;
+  --amber: #f6a81c;
+  --amber3: #c97e0a;
+  --white: #f2f6ff;
+  --offwh: #b8caf0;
+  --gray: #6e87c4;
+  --green: #18e86b;
+  --red: #c62736;
+  --card: rgba(21,53,160,.18);
+  --bord: rgba(246,168,28,.22);
+  --div: rgba(255,255,255,.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
+  color: var(--white);
+  min-height: 100vh;
+  padding: 40px;
+}
+.container { max-width: 1000px; margin: 0 auto; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+  margin-bottom: 40px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--bord);
+}
+.header h1 { font-family: 'Anton', sans-serif; font-size: 36px; color: var(--amber); letter-spacing: 3px; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.badge {
+  padding: 6px 16px; border-radius: 100px;
+  font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+}
+.badge.ok { background: rgba(24,232,107,0.1); color: var(--green); border: 1px solid rgba(24,232,107,0.3); }
+.badge.no { background: rgba(198,39,54,0.1); color: var(--red); border: 1px solid rgba(198,39,54,0.3); }
+.badge.wait { background: rgba(110,135,196,0.1); color: var(--gray); border: 1px solid var(--div); }
+.btn {
+  padding: 10px 20px; border: none; border-radius: 8px;
+  font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: 1px; cursor: pointer;
+  transition: all 0.2s; white-space: nowrap;
+}
+.btn:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-amber { background: var(--amber); color: var(--bg); }
+.btn-red { background: var(--red); color: white; }
+.btn-green { background: var(--green); color: var(--bg); }
+.btn-outline { background: transparent; border: 1px solid var(--div); color: var(--gray); }
+.btn-outline:hover { border-color: var(--amber); color: var(--amber); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+
+/* Grid */
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px; }
+.action-card {
+  background: var(--card); border: 1px solid var(--bord); border-radius: 16px;
+  padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;
+}
+.action-card:hover { border-color: var(--amber); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+.action-card .icon { font-size: 36px; }
+.action-card .title { font-family: 'Anton', sans-serif; color: var(--amber); margin-top: 8px; font-size: 15px; }
+.action-card .sub { font-size: 11px; color: var(--gray); margin-top: 4px; }
+
+/* Sections */
+.section { background: var(--card); border: 1px solid var(--bord); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+.section h3 { font-family: 'Anton', sans-serif; color: var(--amber); margin-bottom: 16px; font-size: 20px; letter-spacing: 1px; }
+.section h4 { font-family: 'Anton', sans-serif; color: var(--offwh); margin-bottom: 8px; font-size: 16px; }
+.section p { color: var(--gray); font-size: 13px; margin-bottom: 16px; }
+
+.form-group { display: flex; flex-direction: column; gap: 12px; }
+select, input {
+  padding: 12px; background: var(--bg); color: var(--white); border: 1px solid var(--div);
+  border-radius: 8px; font-family: 'Rajdhani', sans-serif; font-size: 14px;
+}
+select:focus, input:focus { border-color: var(--amber); outline: none; }
+.score-row { display: flex; gap: 12px; align-items: center; }
+.score-row span { color: var(--gray); font-size: 20px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.msg { text-align: center; margin-top: 12px; font-weight: 600; font-size: 14px; }
+
+/* Stats */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.stat-card { background: rgba(0,0,0,0.2); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-val { font-family: 'Anton', sans-serif; font-size: 28px; color: var(--amber); }
+.stat-lbl { font-size: 11px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+/* Denied */
+.denied-box { text-align: center; padding: 60px; }
+.denied-box .icon { font-size: 80px; }
+.denied-box h2 { font-family: 'Anton', sans-serif; color: var(--red); margin: 16px 0; font-size: 32px; }
+
+/* Footer */
+.footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--div); text-align: center; color: var(--gray); font-size: 12px; }
+
+.hidden { display: none !important; }
+
+@media (max-width: 768px) {
+  body { padding: 16px; }
+  .grid-3 { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .header h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🔧 CLUTCH Admin</h1>
+    <div class="header-right">
+      <span class="badge wait" id="statusBadge">Not Connected</span>
+      <button class="btn btn-red" id="disconnectBtn" style="display:none;" onclick="disconnect()">Disconnect</button>
+    </div>
+  </div>
+
+  <!-- DENIED BOX -->
+  <div class="denied-box hidden" id="deniedBox">
+    <div class="icon">🔒</div>
+    <h2>Access Denied</h2>
+    <p style="color:var(--gray);">Only the contract owner can access this panel.</p>
+    <p style="color:var(--offwh);margin-top:12px;">Connected: <span id="deniedAddr">-</span></p>
+    <p style="color:var(--gray);">Owner: <span id="ownerAddr">0x8e1AfF90cf4D1C6D96278E0Be66D01989DdfABc4</span></p>
+    <button class="btn btn-red" style="margin-top:20px;" onclick="disconnect()">Disconnect</button>
+  </div>
+
+  <!-- ADMIN CONTENT -->
+  <div class="hidden" id="adminContent">
+    
+    <!-- QUICK ACTIONS -->
+    <div class="grid-3">
+      <div class="action-card" id="btnAutomation" onclick="runAutomation()">
+        <div class="icon">🤖</div>
+        <div class="title">Run Automation</div>
+        <div class="sub">Create + Settle matches</div>
+      </div>
+      <div class="action-card" onclick="fetchResults()">
+        <div class="icon">📡</div>
+        <div class="title">Fetch Results</div>
+        <div class="sub">Pull from API now</div>
+      </div>
+      <div class="action-card" onclick="refreshFixtures()">
+        <div class="icon">🔄</div>
+        <div class="title">Refresh Fixtures</div>
+        <div class="sub">Reload match data</div>
+      </div>
+    </div>
+
+    <!-- MANUAL RESULT UPDATE -->
+    <div class="section">
+      <h3>✏️ Manual Result Update</h3>
+      <div class="form-group">
+        <select id="matchSelect" onchange="onMatchSelect()">
+          <option value="">-- Select Match --</option>
+        </select>
+        <div class="score-row">
+          <input type="number" id="homeScore" placeholder="Home Score" min="0" style="flex:1;">
+          <span>-</span>
+          <input type="number" id="awayScore" placeholder="Away Score" min="0" style="flex:1;">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="submitResult('FINISHED')">✅ Mark Finished</button>
+          <button class="btn btn-amber" onclick="submitResult('IN_PLAY')">🔴 Mark Live</button>
+          <button class="btn btn-red" onclick="submitResult('CANCELLED')">❌ Cancel Match</button>
+          <button class="btn btn-amber" onclick="settleMatchDirect()" style="flex:2;">⚡ Settle On-Chain Now</button>
+        </div>
+        <div class="msg" id="resultMsg"></div>
+      </div>
+    </div>
+
+    <!-- UPDATE MATCH TEAMS (KNOCKOUT) -->
+    <div class="section">
+      <h3>🏷️ Update Match Teams (For Knockout Rounds)</h3>
+      <p>Use this after group stage to replace placeholder names (W71, 1A, etc.) with actual qualified teams.</p>
+      <div class="form-group">
+        <select id="teamMatchSelect" onchange="onTeamMatchSelect()">
+          <option value="">-- Select Knockout Match --</option>
+        </select>
+        <div class="score-row">
+          <input type="text" id="newHomeTeam" placeholder="Home Team Name" style="flex:1;">
+          <span>VS</span>
+          <input type="text" id="newAwayTeam" placeholder="Away Team Name" style="flex:1;">
+        </div>
+        <button class="btn btn-amber" onclick="updateMatchTeams()">🏷️ Update Team Names</button>
+        <div class="msg" id="teamMsg"></div>
+      </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div class="section">
+      <h3>📊 Quick Stats</h3>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" id="sMatches">-</div><div class="stat-lbl">Total Matches</div></div>
+        <div class="stat-card"><div class="stat-val" id="sOnchain">-</div><div class="stat-lbl">On-Chain</div></div>
+        <div class="stat-card"><div class="stat-val" id="sFinished">-</div><div class="stat-lbl">Finished</div></div>
+        <div class="stat-card"><div class="stat-val" id="sLive">-</div><div class="stat-lbl">Live/Upcoming</div></div>
+      </div>
+    </div>
+
+    <!-- FEES MANAGEMENT -->
+    <div class="section">
+      <h3>💰 Fee Management</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <h4>Platform Fee</h4>
+          <input type="number" id="platformFee" placeholder="BPS (200 = 2%)" style="width:100%;margin-bottom:8px;">
+          <button class="btn btn-amber" onclick="setPlatformFee()" style="width:100%;">Update Platform Fee</button>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <h4>Oracle Fee</h4>
+          <input type="number" id="oracleFee" placeholder="BPS (100 = 1%)" style="width:100%;margin-bottom:8px;">
+          <button class="btn btn-amber" onclick="setOracleFee()" style="width:100%;">Update Oracle Fee</button>
+        </div>
+        <div style="flex:1;min-width:200px;">
+          <h4>Ultimate Deadline</h4>
+          <input type="text" id="ultimateDeadline" placeholder="Timestamp" style="width:100%;margin-bottom:8px;">
+          <button class="btn btn-amber" onclick="setUltimateDeadline()" style="width:100%;">Update Deadline</button>
+        </div>
+      </div>
+      <div class="msg" id="feeMsg"></div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">CLUTCH World Cup 2026 · Admin Panel · Base Mainnet</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════
+const CFG = {
+  API: 'https://backend-wcup.vercel.app/api',
+  BETTING: '0x0749F106AeA1a6Aa9Cb47ac61CEA2EAF33C18435',
+  RPC_URL: 'https://mainnet.base.org'
+};
+const ADMIN_ADDRESS = '0x8e1AfF90cf4D1C6D96278E0Be66D01989DdfABc4';
+
+let wallet = null;
+let allMatches = [];
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+async function init() {
+  if (!window.ethereum) {
+    document.getElementById('statusBadge').textContent = 'MetaMask Required';
+    document.getElementById('statusBadge').className = 'badge no';
+    return;
+  }
+  
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send('eth_requestAccounts', []);
+    wallet = { provider, signer: await provider.getSigner(), address: accounts[0] };
+    
+    const isAdmin = wallet.address.toLowerCase() === ADMIN_ADDRESS.toLowerCase();
+    
+    if (isAdmin) {
+      document.getElementById('statusBadge').textContent = '✅ Admin Access';
+      document.getElementById('statusBadge').className = 'badge ok';
+      document.getElementById('disconnectBtn').style.display = 'inline-block';
+      document.getElementById('adminContent').classList.remove('hidden');
+      document.getElementById('deniedBox').classList.add('hidden');
+      await loadMatches();
+      populateSelect();
+      populateTeamSelect();
+      loadStats();
+      loadFees();
+    } else {
+      document.getElementById('statusBadge').textContent = '❌ Access Denied';
+      document.getElementById('statusBadge').className = 'badge no';
+      document.getElementById('disconnectBtn').style.display = 'inline-block';
+      document.getElementById('deniedBox').classList.remove('hidden');
+      document.getElementById('deniedAddr').textContent = wallet.address;
+    }
+  } catch(e) {
+    document.getElementById('statusBadge').textContent = 'Connection Failed';
+    document.getElementById('statusBadge').className = 'badge no';
+  }
+}
+
+function disconnect() {
+  wallet = null;
+  document.getElementById('statusBadge').textContent = 'Not Connected';
+  document.getElementById('statusBadge').className = 'badge wait';
+  document.getElementById('disconnectBtn').style.display = 'none';
+  document.getElementById('adminContent').classList.add('hidden');
+  document.getElementById('deniedBox').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DATA LOADING
+// ═══════════════════════════════════════════════════════
+async function loadMatches() {
+  try {
+    const res = await fetch(`${CFG.API}/matches`);
+    const data = await res.json();
+    allMatches = data.matches || [];
+  } catch(e) { console.error('Load matches failed'); }
+}
+
+function populateSelect() {
+  const select = document.getElementById('matchSelect');
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Select Match --</option>' + 
+    allMatches.sort((a,b) => a.startTime - b.startTime).map(m => {
+      const d = new Date(m.startTime * 1000).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+      const score = m.homeScore !== null && m.homeScore !== undefined ? ` (${m.homeScore}-${m.awayScore})` : '';
+      return `<option value="${m.id}">#${m.id}: ${m.homeTeam} vs ${m.awayTeam}${score} - ${d} [${m.status}]</option>`;
+    }).join('');
+}
+
+function onMatchSelect() {
+  const id = document.getElementById('matchSelect').value;
+  if (!id) return;
+  const m = allMatches.find(x => x.id === parseInt(id));
+  if (m && m.homeScore !== null && m.homeScore !== undefined) {
+    document.getElementById('homeScore').value = m.homeScore;
+    document.getElementById('awayScore').value = m.awayScore;
+  } else {
+    document.getElementById('homeScore').value = '';
+    document.getElementById('awayScore').value = '';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  UPDATE MATCH TEAMS (KNOCKOUT)
+// ═══════════════════════════════════════════════════════
+function populateTeamSelect() {
+  const select = document.getElementById('teamMatchSelect');
+  if (!select) return;
+  
+  const knockoutMatches = allMatches
+    .filter(m => m.id >= 73)
+    .sort((a, b) => a.startTime - b.startTime);
+  
+  select.innerHTML = '<option value="">-- Select Knockout Match --</option>' + 
+    knockoutMatches.map(m => {
+      const d = new Date(m.startTime * 1000).toLocaleDateString('en-GB', { day:'numeric', month:'short' });
+      return `<option value="${m.id}">#${m.id}: ${m.homeTeam} vs ${m.awayTeam} - ${m.round} (${d})</option>`;
+    }).join('');
+}
+
+function onTeamMatchSelect() {
+  const id = document.getElementById('teamMatchSelect').value;
+  if (!id) return;
+  const m = allMatches.find(x => x.id === parseInt(id));
+  if (m) {
+    document.getElementById('newHomeTeam').value = m.homeTeam;
+    document.getElementById('newAwayTeam').value = m.awayTeam;
+  }
+}
+
+async function updateMatchTeams() {
+  const id = document.getElementById('teamMatchSelect').value;
+  const homeTeam = document.getElementById('newHomeTeam').value.trim();
+  const awayTeam = document.getElementById('newAwayTeam').value.trim();
+  const msg = document.getElementById('teamMsg');
+  
+  if (!id) { msg.textContent = '⚠️ Select a match'; msg.style.color = 'var(--amber)'; return; }
+  if (!homeTeam || !awayTeam) { msg.textContent = '⚠️ Enter both team names'; msg.style.color = 'var(--amber)'; return; }
+  
+  msg.textContent = '⏳ Updating...'; msg.style.color = 'var(--gray)';
+  
+  try {
+    const res = await fetch(`${CFG.API}/matches/${id}/teams`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ homeTeam, awayTeam })
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      msg.textContent = `✅ Match ${id} updated: ${homeTeam} vs ${awayTeam}`;
+      msg.style.color = 'var(--green)';
+      await loadMatches();
+      populateSelect();
+      populateTeamSelect();
+    } else {
+      msg.textContent = '❌ ' + (data.error || 'Update failed');
+      msg.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    msg.textContent = '⚠️ Endpoint may not exist. Add POST /api/matches/:id/teams to server.js';
+    msg.style.color = 'var(--amber)';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESULT UPDATES
+// ═══════════════════════════════════════════════════════
+async function submitResult(status) {
+  const id = document.getElementById('matchSelect').value;
+  const hs = document.getElementById('homeScore').value;
+  const as = document.getElementById('awayScore').value;
+  const msg = document.getElementById('resultMsg');
+  
+  if (!id) { msg.textContent = '⚠️ Select a match'; msg.style.color = 'var(--amber)'; return; }
+  if (hs === '' || as === '') { msg.textContent = '⚠️ Enter both scores'; msg.style.color = 'var(--amber)'; return; }
+  
+  msg.textContent = '⏳ Updating...'; msg.style.color = 'var(--gray)';
+  
+  try {
+    const res = await fetch(`${CFG.API}/matches/${id}/result`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ homeScore: parseInt(hs), awayScore: parseInt(as), status })
+    });
+    const d = await res.json();
+    msg.textContent = `✅ ${d.match.homeTeam} ${hs}-${as} ${d.match.awayTeam} [${status}] · Winner: ${d.match.winner || 'N/A'}`;
+    msg.style.color = 'var(--green)';
+    await loadMatches();
+    populateSelect();
+    loadStats();
+  } catch(e) { msg.textContent = '❌ Failed: ' + e.message; msg.style.color = 'var(--red)'; }
+}
+
+async function settleMatchDirect() {
+  const id = document.getElementById('matchSelect').value;
+  const msg = document.getElementById('resultMsg');
+  
+  if (!id) { msg.textContent = '⚠️ Select a match first'; msg.style.color = 'var(--amber)'; return; }
+  if (!wallet) { msg.textContent = '⚠️ Connect wallet first'; msg.style.color = 'var(--amber)'; return; }
+  
+  const m = allMatches.find(x => x.id === parseInt(id));
+  if (!m || !m.winner) { msg.textContent = '⚠️ Match must be FINISHED with a winner first'; msg.style.color = 'var(--amber)'; return; }
+  
+  msg.textContent = '⏳ Settling on-chain...'; msg.style.color = 'var(--gray)';
+  
+  try {
+    const outcomeMap = { 'HOME_WIN': 1, 'DRAW': 2, 'AWAY_WIN': 3 };
+    const outcome = outcomeMap[m.winner];
+    if (!outcome) { msg.textContent = '⚠️ Unknown winner: ' + m.winner; msg.style.color = 'var(--amber)'; return; }
+    
+    const betting = new ethers.Contract(CFG.BETTING, ["function settleMatch(uint256,uint8)"], wallet.signer);
+    const tx = await betting.settleMatch(id - 1, outcome);
+    await tx.wait();
+    
+    msg.textContent = `✅ Match ${id} settled on-chain! TX: ${tx.hash.slice(0,10)}...`;
+    msg.style.color = 'var(--green)';
+    loadStats();
+  } catch(e) { msg.textContent = '❌ ' + (e.reason || e.message).slice(0, 80); msg.style.color = 'var(--red)'; }
+}
+
+// ═══════════════════════════════════════════════════════
+//  QUICK ACTIONS
+// ═══════════════════════════════════════════════════════
+async function runAutomation() {
+  const btn = document.getElementById('btnAutomation');
+  const orig = btn.innerHTML;
+  btn.innerHTML = '<div class="icon">⏳</div><div class="title">Running...</div>';
+  btn.style.pointerEvents = 'none';
+  
+  try {
+    const res = await fetch(`${CFG.API}/admin/run-automation`, { method: 'POST' });
+    const data = await res.json();
+    alert('✅ Automation complete!');
+    await loadMatches();
+    populateSelect();
+    populateTeamSelect();
+    loadStats();
+  } catch(e) { alert('❌ Failed: ' + e.message); }
+  
+  btn.innerHTML = orig;
+  btn.style.pointerEvents = 'auto';
+}
+
+async function fetchResults() {
+  try {
+    await fetch(`${CFG.API}/fetch-results`, { method: 'POST' });
+    alert('✅ Results fetch triggered!');
+  } catch(e) { alert('❌ Failed: ' + e.message); }
+}
+
+async function refreshFixtures() {
+  try {
+    const res = await fetch(`${CFG.API}/refresh`, { method: 'POST' });
+    const data = await res.json();
+    alert(`✅ ${data.totalMatches} matches refreshed!`);
+    await loadMatches();
+    populateSelect();
+    populateTeamSelect();
+    loadStats();
+  } catch(e) { alert('❌ Failed: ' + e.message); }
+}
+
+// ═══════════════════════════════════════════════════════
+//  FEE MANAGEMENT
+// ═══════════════════════════════════════════════════════
+async function loadFees() {
+  if (!wallet) return;
+  try {
+    const betting = new ethers.Contract(CFG.BETTING, [
+      "function platformFeeBps() view returns (uint256)",
+      "function oracleFeeBps() view returns (uint256)",
+      "function ultimateDeadline() view returns (uint256)"
+    ], wallet.provider);
+    document.getElementById('platformFee').placeholder = 'Current: ' + (Number(await betting.platformFeeBps())/100).toFixed(1) + '%';
+    document.getElementById('oracleFee').placeholder = 'Current: ' + (Number(await betting.oracleFeeBps())/100).toFixed(1) + '%';
+    document.getElementById('ultimateDeadline').placeholder = 'Deadline: ' + new Date(Number(await betting.ultimateDeadline())*1000).toLocaleDateString();
+  } catch(e) {}
+}
+
+async function setPlatformFee() {
+  const val = document.getElementById('platformFee').value;
+  if (!val) return;
+  const msg = document.getElementById('feeMsg');
+  msg.textContent = '⏳ Updating...'; msg.style.color = 'var(--gray)';
+  try {
+    const betting = new ethers.Contract(CFG.BETTING, ["function setPlatformFee(uint256)"], wallet.signer);
+    const tx = await betting.setPlatformFee(val);
+    await tx.wait();
+    msg.textContent = `✅ Platform fee updated to ${val/100}%`;
+    msg.style.color = 'var(--green)';
+  } catch(e) { msg.textContent = '❌ ' + (e.reason || e.message).slice(0, 80); msg.style.color = 'var(--red)'; }
+}
+
+async function setOracleFee() {
+  const val = document.getElementById('oracleFee').value;
+  if (!val) return;
+  const msg = document.getElementById('feeMsg');
+  msg.textContent = '⏳ Updating...'; msg.style.color = 'var(--gray)';
+  try {
+    const betting = new ethers.Contract(CFG.BETTING, ["function setOracleFee(uint256)"], wallet.signer);
+    const tx = await betting.setOracleFee(val);
+    await tx.wait();
+    msg.textContent = `✅ Oracle fee updated to ${val/100}%`;
+    msg.style.color = 'var(--green)';
+  } catch(e) { msg.textContent = '❌ ' + (e.reason || e.message).slice(0, 80); msg.style.color = 'var(--red)'; }
+}
+
+async function setUltimateDeadline() {
+  const val = document.getElementById('ultimateDeadline').value;
+  if (!val) return;
+  const msg = document.getElementById('feeMsg');
+  msg.textContent = '⏳ Updating...'; msg.style.color = 'var(--gray)';
+  try {
+    const betting = new ethers.Contract(CFG.BETTING, ["function setUltimateDeadline(uint256)"], wallet.signer);
+    const tx = await betting.setUltimateDeadline(val);
+    await tx.wait();
+    msg.textContent = `✅ Deadline updated to ${new Date(parseInt(val)*1000).toLocaleDateString()}`;
+    msg.style.color = 'var(--green)';
+  } catch(e) { msg.textContent = '❌ ' + (e.reason || e.message).slice(0, 80); msg.style.color = 'var(--red)'; }
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATS
+// ═══════════════════════════════════════════════════════
+async function loadStats() {
+  try {
+    const res = await fetch(`${CFG.API}/stats`);
+    const d = await res.json();
+    document.getElementById('sMatches').textContent = d.matchCount || 0;
+    document.getElementById('sFinished').textContent = allMatches.filter(m => m.status === 'FINISHED').length;
+    document.getElementById('sLive').textContent = allMatches.filter(m => m.status !== 'FINISHED').length;
+    
+    if (wallet) {
+      const betting = new ethers.Contract(CFG.BETTING, ['function matchCount() view returns (uint256)'], wallet.provider);
+      document.getElementById('sOnchain').textContent = Number(await betting.matchCount());
+    }
+  } catch(e) {}
+}
+
+// Start
+init().catch(() => {
+  document.getElementById('statusBadge').textContent = 'MetaMask Required';
+  document.getElementById('statusBadge').className = 'badge no';
+});
+</script>
+</body>
+</html>

@@ -3605,6 +3605,7 @@ footer::before {
   background: rgba(246, 168, 28, 0.2);
   transform: translateY(-2px);
 }
+
 </style>
 <script>window.Web3Modal = null;</script>
 </head>
@@ -4336,48 +4337,52 @@ async function loadBetFeed() {
 }
 
 async function loadRealBetsFromChain() {
-  if (!wallet || !wallet.provider) return;
-  
+  // Load REAL individual bets from backend, not contract pools
   try {
-    const betting = new ethers.Contract(CFG.BETTING, [
-      "function matchCount() view returns (uint256)",
-      "function getMatch(uint256) view returns (tuple(string,string,uint256,uint256,uint8,bool,uint256,uint256,uint256,uint256))"
-    ], wallet.provider);
+    // Get all bets from leaderboard
+    const res = await fetch(`${CFG.API}/leaderboard`);
+    const data = await res.json();
     
-    const count = Number(await betting.matchCount());
-    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯'];
+    if (!data.leaderboard || data.leaderboard.length === 0) return;
+    
     feedBets = [];
+    const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
     
-    for (let i = 0; i < Math.min(count, 10); i++) {
+    // For each user on leaderboard, get their actual bets
+    for (const user of data.leaderboard.slice(0, 10)) {
       try {
-        const m = await betting.getMatch(i);
-        const total = parseFloat(ethers.formatUnits(m[9], 9));
+        const betRes = await fetch(`${CFG.API}/user/${user.user}/bets`);
+        const betData = await betRes.json();
         
-        if (total > 0) {
-          const home = parseFloat(ethers.formatUnits(m[6], 9));
-          const draw = parseFloat(ethers.formatUnits(m[7], 9));
-          const away = parseFloat(ethers.formatUnits(m[8], 9));
-          
-          // Determine actual outcome based on which pool has money
-          let outcome = 'HOME_WIN';
-          if (draw > home && draw > away) outcome = 'DRAW';
-          else if (away > home && away > draw) outcome = 'AWAY_WIN';
-          
-          feedBets.push({
-            address: '0x8b54...37dd', // You can't get actual address from contract easily
-            amount: total.toFixed(0),
-            team: m[0] + ' vs ' + m[1],
-            outcome: outcome,
-            emoji: emojis[i % emojis.length],
-            time: 'Recently'
+        if (betData.matchBets && betData.matchBets.length > 0) {
+          betData.matchBets.forEach(bet => {
+            const matchName = `${bet.home_team || 'TBD'} vs ${bet.away_team || 'TBD'}`;
+            feedBets.push({
+              address: (bet.user_address || user.user).slice(0, 6) + '...' + (bet.user_address || user.user).slice(-4),
+              amount: parseFloat(bet.amount || 0).toFixed(0),
+              team: matchName,
+              outcome: bet.prediction, // HOME_WIN, DRAW, or AWAY_WIN
+              emoji: emojis[Math.floor(Math.random() * emojis.length)],
+              time: new Date(bet.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            });
           });
         }
       } catch(e) {}
     }
     
+    // Remove duplicates
+    // Remove duplicates from array
+feedBets = feedBets.filter((bet, index, self) => 
+  index === self.findIndex(b => 
+    b.address === bet.address && 
+    b.amount === bet.amount && 
+    b.outcome === bet.outcome
+  )
+);
+    
     if (feedBets.length > 0) renderFeed();
-    console.log('✅ Feed from chain:', feedBets.length, 'bets');
-  } catch(e) { console.log('Chain feed error:', e.message); }
+    console.log('✅ Feed from backend:', feedBets.length, 'bets');
+  } catch(e) { console.log('Feed load error:', e.message); }
 }
 
 function renderFeed() {
@@ -4394,12 +4399,17 @@ function renderFeed() {
   if (countEl) countEl.textContent = feedBets.length + ' bets';
   
   const items = feedBets.map(bet => {
-    // SHOW CORRECT OUTCOME
-    let outcomeText;
-    if (bet.outcome === 'HOME_WIN') outcomeText = bet.team.split(' vs ')[0] + ' Win';
-    else if (bet.outcome === 'DRAW') outcomeText = 'Draw';
-    else if (bet.outcome === 'AWAY_WIN') outcomeText = bet.team.split(' vs ')[1] + ' Win';
-    else outcomeText = bet.team;
+    // Show the CORRECT outcome
+    let outcomeText = bet.team;
+    if (bet.outcome === 'HOME_WIN') {
+      const homeTeam = bet.team.split(' vs ')[0];
+      outcomeText = homeTeam + ' Win';
+    } else if (bet.outcome === 'DRAW') {
+      outcomeText = 'Draw';
+    } else if (bet.outcome === 'AWAY_WIN') {
+      const awayTeam = bet.team.split(' vs ')[1] || bet.team;
+      outcomeText = awayTeam + ' Win';
+    }
     
     return `
     <span class="feed-item">
@@ -4413,12 +4423,10 @@ function renderFeed() {
     </span>`;
   }).join('');
   
-  track.innerHTML = items + items;
-  
+  track.innerHTML = items ;
   track.onmouseenter = () => track.style.animationPlayState = 'paused';
   track.onmouseleave = () => track.style.animationPlayState = 'running';
 }
-
 function addBetToFeed(amount, teamName, outcome) {
   const emojis = ['🔥', '⚡', '💎', '🚀', '🎯', '🌟', '💪', '🏆'];
   feedBets.unshift({ 
@@ -4436,134 +4444,124 @@ function addBetToFeed(amount, teamName, outcome) {
 // REMOVE this line - it overwrites real bets:
 // setInterval(loadBetFeed, 30000);
 // ═══════════════════════════════════════════════════════
-//  HIGHLIGHTS DASHBOARD
+//  HIGHLIGHTS DASHBOARD (No Wallet Required)
 // ═══════════════════════════════════════════════════════
 
-let highlightMatches = [];
 let currentHighlightFilter = 'all';
-
-async function loadHighlights() {
-  if (allMatchesRaw.length === 0) {
-    setTimeout(loadHighlights, 2000);
-    return;
-  }
-  
-  // Get matches with pool data
-  highlightMatches = allMatchesRaw.filter(m => m.pools && m.pools.total);
-  
-  renderHighlights();
-}
 
 function renderHighlights(filter = 'all') {
   const grid = document.getElementById('highlightsGrid');
   if (!grid) return;
   
-  let cards = [];
-  
-  // 🔥 TRENDING - Highest total pool
-  if (filter === 'all' || filter === 'trending') {
-    const trending = [...highlightMatches]
-      .filter(m => m.status === 'SCHEDULED' && parseFloat(m.pools.total) > 0)
-      .sort((a, b) => parseFloat(b.pools.total) - parseFloat(a.pools.total))[0];
-    
-    if (trending) {
-      cards.push({
-        type: 'trending',
-        badge: '🔥 Trending',
-        badgeClass: 'trending',
-        match: trending,
-        icon: '🔥',
-        stat: `${parseFloat(trending.pools.total).toFixed(0)} CLUTCH`,
-        label: 'Total Pool',
-        color: 'var(--red)'
-      });
-    }
-  }
-  
-  // ⏰ NEXT MATCH - Closest upcoming
-  if (filter === 'all' || filter === 'next') {
-    const now = Math.floor(Date.now() / 1000);
-    const nextMatch = allMatchesRaw
-      .filter(m => m.status === 'SCHEDULED' && m.startTime > now)
-      .sort((a, b) => a.startTime - b.startTime)[0];
-    
-    if (nextMatch) {
-      cards.push({
-        type: 'next-match',
-        badge: '⏰ Next Match',
-        badgeClass: 'next',
-        match: nextMatch,
-        icon: '⏰',
-        countdown: nextMatch.startTime,
-        label: 'Kickoff',
-        color: 'var(--blue)'
-      });
-    }
-  }
-  
-  // ⚡ LIVE NOW - Matches in play
-  if (filter === 'all' || filter === 'live') {
-    const liveMatches = allMatchesRaw.filter(m => 
-      m.status === 'IN_PLAY' || m.status === 'PAUSED'
-    );
-    
-    if (liveMatches.length > 0) {
-      const live = liveMatches[0];
-      cards.push({
-        type: 'live-now',
-        badge: '⚡ LIVE NOW',
-        badgeClass: 'live',
-        match: live,
-        icon: '⚡',
-        stat: `${live.homeScore || 0} - ${live.awayScore || 0}`,
-        label: 'Live Score',
-        color: 'var(--green)'
-      });
-    }
-  }
-  
-  // 👥 MOST ACTIVE - Most unique bettors (estimated by pool balance)
-  if (filter === 'all' || filter === 'active') {
-    const active = [...highlightMatches]
-      .filter(m => parseFloat(m.pools.total) > 0)
-      .sort((a, b) => {
-        // Most balanced = most active
-        const aBalance = Math.abs(parseFloat(a.pools.home) - parseFloat(a.pools.away));
-        const bBalance = Math.abs(parseFloat(b.pools.home) - parseFloat(b.pools.away));
-        return aBalance - bBalance;
-      })[0];
-    
-    if (active) {
-      cards.push({
-        type: 'most-active',
-        badge: '👥 Most Active',
-        badgeClass: 'active',
-        match: active,
-        icon: '👥',
-        stat: getOddsText(active),
-        label: 'Closest Match',
-        color: 'var(--amber)'
-      });
-    }
-  }
-  
-  if (cards.length === 0) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray);">
-      <span style="font-size:40px;">📊</span>
-      <p>No highlights yet. Start betting!</p>
-    </div>`;
+  if (allMatchesRaw.length === 0) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray);"><span style="font-size:40px;">📊</span><p>Loading...</p></div>';
     return;
   }
   
-  grid.innerHTML = cards.map(card => renderHighlightCard(card)).join('');
+  // Get matches with pools (if any)
+  const withPools = allMatchesRaw.filter(m => m.pools && parseFloat(m.pools.total) > 0);
+  const now = Math.floor(Date.now() / 1000);
   
-  // Start countdown timer for next match
+  let cards = [];
+  
+  // 🔥 TRENDING - Only show if pools exist
+  if (withPools.length > 0) {
+    const trending = withPools.sort((a, b) => parseFloat(b.pools.total) - parseFloat(a.pools.total))[0];
+    cards.push({
+      type: 'trending', badge: '🔥 Trending', badgeClass: 'trending',
+      match: trending,
+      stat: `${parseFloat(trending.pools.total).toFixed(0)} CLUTCH`,
+      label: 'Total Pool'
+    });
+  }
+  
+  // ⏰ NEXT MATCH - Always shows
+  const nextMatch = allMatchesRaw
+    .filter(m => m.status === 'SCHEDULED' && m.startTime > now)
+    .sort((a, b) => a.startTime - b.startTime)[0];
+  
+  if (nextMatch) {
+    cards.push({
+      type: 'next-match', badge: '⏰ Next Match', badgeClass: 'next',
+      match: nextMatch,
+      countdown: nextMatch.startTime,
+      label: 'Kickoff'
+    });
+  }
+  
+  // 👥 MOST ACTIVE or Second Featured
+  if (withPools.length > 1) {
+    // Most balanced pool
+    const active = withPools.sort((a, b) => {
+      const aBal = Math.abs((parseFloat(a.pools?.home) || 0) - (parseFloat(a.pools?.away) || 0));
+      const bBal = Math.abs((parseFloat(b.pools?.home) || 0) - (parseFloat(b.pools?.away) || 0));
+      return aBal - bBal;
+    })[0];
+    if (active && active.odds) {
+      cards.push({
+        type: 'most-active', badge: '👥 Most Active', badgeClass: 'active',
+        match: active,
+        stat: `${active.odds.home || 0}% / ${active.odds.draw || 0}% / ${active.odds.away || 0}%`,
+        label: 'Closest Match'
+      });
+    }
+  } else {
+    // Show another upcoming match
+    const usedIds = cards.map(c => c.match.id);
+    const fallback = allMatchesRaw.find(m => m.status === 'SCHEDULED' && !usedIds.includes(m.id));
+    if (fallback) {
+      cards.push({
+        type: 'most-active', badge: '⚽ Upcoming', badgeClass: 'active',
+        match: fallback,
+        stat: 'Group Stage',
+        label: 'Upcoming Match'
+      });
+    }
+  }
+  
+  // ⚡ LIVE - Only if matches are live
+  const liveMatches = allMatchesRaw.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+  if (liveMatches.length > 0 && cards.length < 3) {
+    cards.push({
+      type: 'live-now', badge: '⚡ LIVE NOW', badgeClass: 'live',
+      match: liveMatches[0],
+      stat: `${liveMatches[0].homeScore || 0} - ${liveMatches[0].awayScore || 0}`,
+      label: 'Live Score'
+    });
+  }
+  
+  // Ensure 3 cards minimum
+  if (cards.length < 3) {
+    const usedIds = cards.map(c => c.match.id);
+    const extra = allMatchesRaw.find(m => m.status === 'SCHEDULED' && !usedIds.includes(m.id));
+    if (extra) {
+      cards.push({
+        type: 'most-active', badge: '🌟 Featured', badgeClass: 'active',
+        match: extra,
+        stat: 'Upcoming',
+        label: 'Group Stage'
+      });
+    }
+  }
+  
+  // NOW FILTER based on selection
+  let displayCards = cards;
+  if (filter === 'trending') displayCards = cards.filter(c => c.type === 'trending');
+  if (filter === 'next') displayCards = cards.filter(c => c.type === 'next-match');
+  if (filter === 'live') displayCards = cards.filter(c => c.type === 'live-now');
+  if (filter === 'active') displayCards = cards.filter(c => c.type === 'most-active');
+  
+  if (displayCards.length === 0) {
+    displayCards = cards; // Show all if filter has no results
+  }
+  
+  grid.innerHTML = displayCards.map(card => renderHighlightCard(card)).join('');
+  
   const nextCard = cards.find(c => c.type === 'next-match');
-  if (nextCard) {
-    startCountdown(nextCard.match.startTime);
+  if (nextCard && nextCard.countdown) {
+    startCountdown(nextCard.countdown);
   }
 }
-
 function renderHighlightCard(card) {
   const m = card.match;
   const homeFlag = getFlagUrl(m.homeTeam);
@@ -4571,7 +4569,7 @@ function renderHighlightCard(card) {
   
   let extraHTML = '';
   
-  if (card.type === 'next-match') {
+  if (card.type === 'next-match' && card.countdown) {
     extraHTML = `
       <div class="hl-countdown" id="countdown-${m.id}">
         <span id="cd-d-${m.id}">--</span>d 
@@ -4613,15 +4611,15 @@ function renderHighlightCard(card) {
       
       ${m.pools && parseFloat(m.pools.total) > 0 ? `
         <div class="hl-pool-bar">
-          <div class="hl-pool-segment home" style="flex:${m.odds?.home || 1}"></div>
-          <div class="hl-pool-segment draw" style="flex:${m.odds?.draw || 1}"></div>
-          <div class="hl-pool-segment away" style="flex:${m.odds?.away || 1}"></div>
+          <div class="hl-pool-segment home" style="flex:${m.odds?.home || 33}"></div>
+          <div class="hl-pool-segment draw" style="flex:${m.odds?.draw || 33}"></div>
+          <div class="hl-pool-segment away" style="flex:${m.odds?.away || 34}"></div>
         </div>
       ` : ''}
       
       <div class="hl-info" style="margin-top:8px;">
         ${extraHTML}
-        <button class="hl-bet-btn" onclick="event.stopPropagation();goToBet(${m.id})">Bet Now →</button>
+        <button class="hl-bet-btn" onclick="event.stopPropagation();scrollToMatch(${m.id})">Bet Now →</button>
       </div>
       
       <div style="color:var(--gray);font-size:10px;margin-top:8px;">
@@ -4629,6 +4627,18 @@ function renderHighlightCard(card) {
       </div>
     </div>
   `;
+}
+
+function initHighlights() {
+  renderHighlights();
+  setInterval(renderHighlights, 500);
+}
+
+function filterHighlights(filter, btn) {
+  document.querySelectorAll('.hl-filter-chip').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentHighlightFilter = filter;
+  renderHighlights(filter);
 }
 
 function getOddsText(match) {
@@ -4686,11 +4696,7 @@ function startCountdown(startTime) {
   window._highlightCountdown = setInterval(update, 30000);
 }
 
-// Load highlights after matches load
-function initHighlights() {
-  loadHighlights();
-  setInterval(loadHighlights, 30000); // Refresh every minute
-}
+
 // ══════════════════════════════════════════════════════════════════
 //  FLAG IMAGES FROM CDN - World Cup 2026 Edition
 // ══════════════════════════════════════════════════════════════════
@@ -5913,8 +5919,7 @@ function countUp(id, target) {
     applyGroupFilter();
     $('mchip').textContent = allMatchesRaw.length + ' Matches';
     
-    // 🔴 LOAD HIGHLIGHTS DASHBOARD
-    setTimeout(initHighlights, 1000);
+    setTimeout(() => renderHighlights(), 500);
     
   } finally {
     isLoadingMatches = false;
